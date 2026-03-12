@@ -39,7 +39,8 @@ public class UserController
     @PostMapping("/login")
     public ResponseEntity<?> login(@ModelAttribute LoginRequest request) {
         if (userService.authenticate(request.getUsername(), request.getPassword())) {
-            String token = jwtService.generateToken(request.getUsername());
+            User user = userService.getUserByUsername(request.getUsername());
+            String token = jwtService.generateToken(user.getUsername(), user.getUserType());
             return ResponseEntity.ok(new AuthResponse(token));
         }
         return ResponseEntity.status(401).body("Invalid credentials");
@@ -48,23 +49,23 @@ public class UserController
     @Operation(summary = "Đăng ký khách hàng", description = "Nhận đăng ký khách hàng")
     @PostMapping(value = "/customer", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createCustomer(
-            @ModelAttribute User user,
-            @RequestParam(value = "image", required = false) MultipartFile file) {
-                try {
-                    if (file != null && !file.isEmpty()) {
+        @ModelAttribute User user,
+        @RequestParam(value = "image", required = false) MultipartFile file) {
+            try {
+                if (file != null && !file.isEmpty()) {
 
-                        String imageUrl = uploadService.uploadImage(file);
-                        user.setAvatar(imageUrl);
-                    }
-
-                    user.setUserType("Customer");
-                    User savedUser = userService.addUser(user);
-                    return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
-                } catch (IOException e) {
-                    return ResponseEntity.status(500).body("Lỗi upload ảnh lên Cloudinary");
-                } catch (RuntimeException e) {
-                    return ResponseEntity.badRequest().body(e.getMessage());
+                    String imageUrl = uploadService.uploadImage(file);
+                    user.setAvatar(imageUrl);
                 }
+
+                user.setUserType("Customer");
+                User savingUser = userService.addUser(user);
+                return ResponseEntity.status(HttpStatus.CREATED).body(savingUser);
+            } catch (IOException e) {
+                return ResponseEntity.status(500).body("Lỗi upload ảnh lên Cloudinary");
+            } catch (RuntimeException e) {
+                return ResponseEntity.badRequest().body(e.getMessage());
+            }
     }
 
     @Operation(summary = "Đăng ký thợ cắt tóc", description = "Nhận đăng ký khách hàng")

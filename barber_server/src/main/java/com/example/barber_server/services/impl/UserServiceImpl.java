@@ -44,7 +44,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserByUsername(String username) {
-
         return userRepository.findByUsername(username);
     }
 
@@ -69,7 +68,7 @@ public class UserServiceImpl implements UserService {
 
 
         if (u.getUserType() == null) {
-            u.setUserType("Customer");
+            u.setUserType("CUSTOMER");
         }
 
         return userRepository.save(u);

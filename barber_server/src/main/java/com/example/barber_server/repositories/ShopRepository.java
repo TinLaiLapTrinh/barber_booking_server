@@ -21,4 +21,5 @@ public interface ShopRepository extends JpaRepository<Shop, Integer>, JpaSpecifi
 
     Page<Shop> findAllByProvinceCode_FullNameContainingIgnoreCase(String fullName, Pageable pageable);
 
+
 }
