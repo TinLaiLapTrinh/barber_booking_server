@@ -1,11 +1,14 @@
 package com.example.barber_server.controllers;
 
 
-import com.example.barber_server.dto.dto_request.ShopDTO;
+import com.example.barber_server.dto.dto_request.ShopRequest;
+import com.example.barber_server.models.ServiceDetail;
 import com.example.barber_server.models.Shop;
 import com.example.barber_server.services.ShopService;
 import com.example.barber_server.services.UploadImageService;
 import io.swagger.v3.oas.annotations.Operation;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -13,38 +16,53 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/shops")
 public class ShopController {
     private final ShopService shopService;
     private final UploadImageService uploadService;
 
-    public ShopController(UploadImageService uploadService, ShopService shopService) {
-        this.shopService = shopService;
-        this.uploadService= uploadService;
-    }
-
     @Operation(summary = "Đăng ký tiệm cắt tóc", description = "Đăng ký tiệm cắt tóc")
     @PostMapping(value = "/shop", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> createShop(
-            @ModelAttribute ShopDTO shopDto,
+    public ResponseEntity<Shop> createShop(
+            @ModelAttribute ShopRequest shopRequest,
             @RequestParam(value = "image", required = false) MultipartFile file) throws IOException {
 
-    
+
         if (file != null && !file.isEmpty()) {
             String imageUrl = uploadService.uploadImage(file);
             System.out.println("--- DEBUG UPLOAD ---");
-            System.out.println("Link ảnh từ Cloudinary: " + imageUrl); // Xem link có null không
-            shopDto.setAvatar(imageUrl);
+            System.out.println("Link ảnh từ Cloudinary: " + imageUrl);
+            shopRequest.setAvatar(imageUrl);
         } else {
             System.out.println("--- DEBUG UPLOAD ---");
             System.out.println("Không nhận được file hoặc file trống!");
         }
 
-        // Nếu createShop bắn ra RuntimeException, GlobalExceptionHandler sẽ tự xử lý
-        return ResponseEntity.status(HttpStatus.CREATED).body(shopService.createShop(shopDto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(shopService.createShop(shopRequest));
     }
+
+    @Operation(summary = "Danh sách cửa hàng", description = "Lấy danh sách shop có phân trang và lọc động")
+    @GetMapping(value = "")
+    public ResponseEntity<Page<Shop>> getShops(
+            @RequestParam Map<String, String> params,
+            @org.springframework.data.web.PageableDefault(size = 10, page = 0) org.springframework.data.domain.Pageable pageable
+    ) {
+        Page<Shop> filteredShops = shopService.filterShops(params, pageable);
+
+        return ResponseEntity.ok(filteredShops);
+    }
+
+
+//    @Operation(summary = "Khởi tạo các dịch vụ cho shop")
+//    @PostMapping("/service/{shopId}/details/{serviceId}")
+//    public ResponseEntity<List<ServiceDetail>> createShopService(@PathVariable Integer shopId,Integer serviceId) {
+//        return ResponseEntity.ok(serviceDetailService.findAllByServiceId(serviceId));
+//    }
 
 
 }

@@ -3,7 +3,7 @@ package com.example.barber_server.dto.dto_request;
 import lombok.Data;
 
 @Data
-public class ShopDTO {
+public class ShopRequest {
     private String name;
     private String address;
     private Float longitude;
