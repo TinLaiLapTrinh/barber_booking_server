@@ -1,6 +1,6 @@
 package com.example.barber_server.services.impl;
 
-import com.example.barber_server.dto.dto_request.ShopDTO;
+import com.example.barber_server.dto.dto_request.ShopRequest;
 import com.example.barber_server.models.Shop;
 import com.example.barber_server.repositories.ProvinceRepository;
 import com.example.barber_server.repositories.ShopRepository;
@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -41,10 +42,50 @@ public class ShopServiceImpl implements ShopService {
     }
 
     @Override
-    public Page<Shop> filterShops(String name, String provinceCode, Integer unitId, String wardCode, Pageable pageable) {
+    @Transactional
+    public Shop createShop(ShopRequest shopRequest) {
 
-        if (name != null && provinceCode == null && unitId == null && wardCode == null) {
-            return shopRepository.findAllByNameContainingIgnoreCase(name, pageable);
+        validateCoordinates(shopRequest.getLatitude(), shopRequest.getLongitude());
+
+        String pCode = shopRequest.getProvinceCode();
+        String wCode = shopRequest.getWardCode();
+        this.validateLocation(pCode, wCode);
+
+        Shop shopEntity = new Shop();
+        shopEntity.setName(shopRequest.getName());
+        shopEntity.setAddress(shopRequest.getAddress());
+        shopEntity.setLatitude(shopRequest.getLatitude());
+        shopEntity.setLongitude(shopRequest.getLongitude());
+        shopEntity.setAvatar(shopRequest.getAvatar());
+        shopEntity.setProvinceCode(provinceRepository.getReferenceById(pCode));
+        shopEntity.setWardCode(wardRepository.getReferenceById(wCode));
+
+
+        try {
+            return shopRepository.save(shopEntity);
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi hệ thống khi tạo cửa hàng: " + e.getMessage());
+        }
+    }
+    @Override
+    public Shop updateShop(Integer id, Shop shopDetails) {
+        return null;
+    }
+
+
+    @Override
+    public Page<Shop> filterShops(Map<String, String> params, Pageable pageable) {
+        // 1. Trích xuất và validate dữ liệu từ params
+        String name = params.get("name");
+        String provinceCode = params.get("provinceCode");
+        String wardCode = params.get("wardCode");
+        Integer unitId = null;
+        try {
+            if (params.get("unitId") != null) {
+                unitId = Integer.parseInt(params.get("unitId"));
+            }
+        } catch (NumberFormatException e) {
+            // Log lỗi hoặc bỏ qua nếu unitId gửi lên không phải là số
         }
 
         if (provinceCode != null && name == null && unitId == null && wardCode == null) {
@@ -66,19 +107,23 @@ public class ShopServiceImpl implements ShopService {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (name != null && !name.isEmpty()) {
+            // Lọc theo tên (không phân biệt hoa thường)
+            if (name != null && !name.trim().isEmpty()) {
                 predicates.add(cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
             }
 
-            if (provinceCode != null) {
+            // Lọc theo mã tỉnh/thành
+            if (provinceCode != null && !provinceCode.trim().isEmpty()) {
                 predicates.add(cb.equal(root.get("provinceCode").get("code"), provinceCode));
             }
 
+            // Lọc theo mã đơn vị hành chính (unitId)
             if (unitId != null) {
                 predicates.add(cb.equal(root.get("provinceCode").get("administrativeUnit").get("id"), unitId));
             }
 
-            if (wardCode != null) {
+            // Lọc theo mã phường/xã
+            if (wardCode != null && !wardCode.trim().isEmpty()) {
                 predicates.add(cb.equal(root.get("wardCode").get("code"), wardCode));
             }
 
@@ -86,43 +131,6 @@ public class ShopServiceImpl implements ShopService {
         };
     }
 
-    @Override
-    @Transactional
-    public Shop createShop(ShopDTO shopDto) {
-        // 1. Tái sử dụng hàm validate tọa độ
-        validateCoordinates(shopDto.getLatitude(), shopDto.getLongitude());
-
-        // 2. Lấy mã tỉnh/xã từ DTO (Giả sử DTO của bạn trả về String cho Code)
-        String pCode = shopDto.getProvinceCode();
-        String wCode = shopDto.getWardCode();
-
-        // 3. Tái sử dụng hàm validate location (đã check exists trong DB)
-        this.validateLocation(pCode, wCode);
-
-        // 4. CHUYỂN ĐỔI DTO -> MODEL (ENTITY)
-        Shop shopEntity = new Shop();
-        shopEntity.setName(shopDto.getName());
-        shopEntity.setAddress(shopDto.getAddress());
-        shopEntity.setLatitude(shopDto.getLatitude());
-        shopEntity.setLongitude(shopDto.getLongitude());
-        shopEntity.setAvatar(shopDto.getAvatar()); // Link ảnh đã upload từ Controller
-
-        // 5. SET QUAN HỆ (Mapping Relationship)
-        // Vì validateLocation đã đảm bảo nó tồn tại, ta dùng getReferenceById để tối ưu hiệu năng
-        shopEntity.setProvinceCode(provinceRepository.getReferenceById(pCode));
-        shopEntity.setWardCode(wardRepository.getReferenceById(wCode));
-
-        // 6. LƯU MODEL
-        try {
-            return shopRepository.save(shopEntity);
-        } catch (Exception e) {
-            throw new RuntimeException("Lỗi hệ thống khi tạo cửa hàng: " + e.getMessage());
-        }
-    }
-    @Override
-    public Shop updateShop(Integer id, Shop shopDetails) {
-        return null;
-    }
 
 
 }

@@ -26,8 +26,5 @@ public class ShopService {
     @JoinColumn(name = "service_id", nullable = false)
     private Service service;
 
-    @Column(name = "prices", nullable = false)
-    private Float prices;
-
 
 }

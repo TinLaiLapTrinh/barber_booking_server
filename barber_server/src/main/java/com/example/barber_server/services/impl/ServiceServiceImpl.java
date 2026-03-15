@@ -13,13 +13,17 @@ import java.util.List;
 public class ServiceServiceImpl implements ServiceService {
     public final ServiceRepository serviceRepository;
 
+
     @Override
     public List<com.example.barber_server.models.Service> findAllService() {
-        return (serviceRepository.findAll());
+        return serviceRepository.findAll();
     }
 
     @Override
     public com.example.barber_server.models.Service addService(com.example.barber_server.models.Service service) {
+        if (serviceRepository.existsByName(service.getName())) {
+            throw new RuntimeException("Lỗi: Tên dịch vụ '" + service.getName() + "' đã tồn tại trong hệ thống!");
+        }
         return serviceRepository.save(service);
     }
 }
