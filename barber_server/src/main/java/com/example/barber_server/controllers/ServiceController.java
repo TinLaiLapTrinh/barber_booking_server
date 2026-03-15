@@ -24,10 +24,8 @@ public class ServiceController {
     public ResponseEntity<Service> createService(
             @ModelAttribute Service service
     ){
-        // Lý tưởng nhất là hàm addService trả về entity đã lưu (có ID từ DB)
-        Service savedService = serviceService.addService(service);
 
-        // Thêm .body() để đính kèm object vào response
+        Service savedService = serviceService.addService(service);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedService);
     }
 

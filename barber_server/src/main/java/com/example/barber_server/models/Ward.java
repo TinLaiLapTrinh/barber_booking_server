@@ -1,5 +1,6 @@
 package com.example.barber_server.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -10,6 +11,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "wards")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Ward {
     @Id
     @Size(max = 20)

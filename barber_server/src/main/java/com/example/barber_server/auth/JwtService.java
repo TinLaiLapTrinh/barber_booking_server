@@ -18,13 +18,23 @@ public class JwtService {
     // 2. Chuyển chuỗi cố định đó thành SecretKey
     private final SecretKey key = Keys.hmacShaKeyFor(SECRET_STRING.getBytes());
 
-    public String generateToken(String username) {
+    public String generateToken(String username, String role) {
         return Jwts.builder()
                 .subject(username)
+                .claim("role", role) // Lưu role vào đây
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(key)
                 .compact();
+    }
+
+    public String extractRole(String token) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("role", String.class);
     }
 
     public String extractUsername(String token) {
