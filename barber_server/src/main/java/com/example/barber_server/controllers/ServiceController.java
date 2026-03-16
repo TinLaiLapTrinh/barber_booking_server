@@ -24,20 +24,17 @@ public class ServiceController {
     private final ServiceService serviceService;
     private final ServiceDetailService serviceDetailService;
 
-    // 1. Tạo nhóm dịch vụ lớn (Ví dụ: Cắt tóc, Gội đầu)
     @Operation(summary = "Khởi tạo dịch vụ")
     @PostMapping(value = "/service")
     public ResponseEntity<Service> createService(@ModelAttribute Service service) {
         return ResponseEntity.status(HttpStatus.CREATED).body(serviceService.addService(service));
     }
 
-    // 2. Lấy danh sách nhóm dịch vụ
     @GetMapping("/services")
     public ResponseEntity<List<Service>> getServices() {
         return ResponseEntity.ok(serviceService.findAllService());
     }
 
-    // 3. Tạo chi tiết (Ví dụ: Cắt Fade - Cho Nam)
     @Operation(summary = "Khởi tạo các chi tiết dịch vụ")
     @PostMapping(value = "/service/{serviceId}/detail")
     public ResponseEntity<ServiceDetail> createDetailService(
@@ -60,7 +57,6 @@ public class ServiceController {
         List<ImageResponse> savedImages = serviceDetailService.uploadServiceDetailImages(detailId, files);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedImages);
     }
-
 
     @Operation(summary = "Danh sách chi tiết theo nhóm")
     @GetMapping("/service/{serviceId}/details")

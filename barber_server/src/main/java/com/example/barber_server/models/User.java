@@ -38,6 +38,12 @@ public class User {
     @Column(name = "username", nullable = false, length = 100)
     private String username;
 
+    @JsonIgnore
+    @Size(max = 255)
+    @NotNull
+    @Column(name = "password", nullable = false)
+    private String password;
+
     @Size(max = 100)
     @Column(name = "phone_number", length = 100)
     private String phoneNumber;
@@ -50,11 +56,7 @@ public class User {
     @Column(name = "avatar")
     private String avatar;
 
-    @JsonIgnore
-    @Size(max = 255)
-    @NotNull
-    @Column(name = "password", nullable = false)
-    private String password;
+
 
     @NotNull
 //    @ColumnDefault("'Customer'")

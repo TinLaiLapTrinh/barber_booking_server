@@ -2,9 +2,11 @@ package com.example.barber_server.controllers;
 
 
 import com.example.barber_server.dto.dto_request.ShopRequest;
+import com.example.barber_server.dto.dto_response.ShopServiceResponse;
 import com.example.barber_server.models.ServiceDetail;
 import com.example.barber_server.models.Shop;
 import com.example.barber_server.services.ShopService;
+import com.example.barber_server.services.ShopServiceSrvice;
 import com.example.barber_server.services.UploadImageService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ import java.util.Map;
 @RequestMapping("/api/shops")
 public class ShopController {
     private final ShopService shopService;
+    private final ShopServiceSrvice shopServiceSrvice;
     private final UploadImageService uploadService;
 
     @Operation(summary = "Đăng ký tiệm cắt tóc", description = "Đăng ký tiệm cắt tóc")
@@ -58,11 +61,15 @@ public class ShopController {
     }
 
 
-//    @Operation(summary = "Khởi tạo các dịch vụ cho shop")
-//    @PostMapping("/service/{shopId}/details/{serviceId}")
-//    public ResponseEntity<List<ServiceDetail>> createShopService(@PathVariable Integer shopId,Integer serviceId) {
-//        return ResponseEntity.ok(serviceDetailService.findAllByServiceId(serviceId));
-//    }
+    @Operation(summary = "Gán dịch vụ cho shop", description = "Tạo liên kết giữa một cửa hàng và một dịch vụ hệ thống")
+    @PostMapping("/shop/{shopId}/service")
+    public ResponseEntity<ShopServiceResponse> createShopService(
+            @PathVariable Integer shopId,
+            @RequestParam Integer serviceId) {
+
+        ShopServiceResponse response = shopServiceSrvice.createShopService(shopId, serviceId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 
 
 }

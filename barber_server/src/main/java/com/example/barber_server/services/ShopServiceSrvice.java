@@ -9,5 +9,5 @@ public interface ShopServiceSrvice {
 
     List<ShopService> findByShop_id(Integer shopId);
 
-    ShopServiceResponse createShopService(Integer shopId, Integer serviceId, ShopService shopService);
+    ShopServiceResponse createShopService(Integer shopId, Integer serviceId);
 }

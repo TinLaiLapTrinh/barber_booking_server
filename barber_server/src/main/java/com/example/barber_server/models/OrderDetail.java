@@ -1,8 +1,10 @@
 package com.example.barber_server.models;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -21,10 +23,20 @@ public class OrderDetail {
     @JoinColumn(name = "order_id")
     private Order order;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.SET_NULL)
-    @JoinColumn(name = "service_id")
-    private Service service;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "shop_service_detail_id", nullable = false)
+    private ShopServiceDetail shopServiceDetail;
+
+    @NotNull
+    @ColumnDefault("0")
+    @Column(name = "original_price", nullable = false)
+    private Float originalPrice;
+
+    @NotNull
+    @ColumnDefault("0")
+    @Column(name = "final_price", nullable = false)
+    private Float finalPrice;
 
 
 }
