@@ -63,21 +63,16 @@ public class ServiceDetailServiceImpl implements ServiceDetailService {
 
         return files.stream().map(file -> {
             try {
-                // 1. Upload lên Cloudinary
+
                 String url = uploadImageService.uploadImage(file);
 
-                // 2. Tạo và lưu Entity
                 ServiceDetailImage imgEntity = new ServiceDetailImage();
                 imgEntity.setServiceDetail(detail);
                 imgEntity.setImage(url);
                 ServiceDetailImage savedEntity = serviceDetailImageRepository.save(imgEntity);
 
-                // 3. MAP SANG DTO (Đây là bước giải quyết lỗi ByteBuddy)
-                ImageResponse response = new ImageResponse();
-                response.setId(savedEntity.getId());
-                response.setUrl(savedEntity.getImage());
+                return new ImageResponse(savedEntity.getId(),savedEntity.getImage());
 
-                return response;
             } catch (Exception e) {
                 // Ném lỗi để @Transactional thực hiện Rollback nếu cần
                 throw new RuntimeException("Lỗi khi xử lý file " + file.getOriginalFilename() + ": " + e.getMessage());

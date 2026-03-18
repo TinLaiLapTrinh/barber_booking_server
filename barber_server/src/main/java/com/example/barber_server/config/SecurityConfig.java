@@ -29,9 +29,11 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**","/error").permitAll()
                         .requestMatchers("/api/users/login", "/api/users/customers","/api/users/barber").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/services/**","/api/shops/shop").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/orders/order").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.POST, "/api/shops/shop","/api/services/service",
                                 "/api/services/service/{serviceId}/detail","/api/services/detail/{detailId}/images").hasRole("ADMIN")
-
+//                        .requestMatchers(HttpMethod.POST, "/api/orders/order")
+//                        .hasAnyAuthority("ROLE_CUSTOMER", "ROLE_BARBER", "ROLE_ADMIN")
                         .anyRequest().authenticated()
                 ).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

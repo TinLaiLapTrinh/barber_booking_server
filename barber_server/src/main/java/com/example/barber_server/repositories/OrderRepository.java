@@ -20,4 +20,6 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
     boolean isBarberBusy(Integer barberId, LocalDate orderDate, LocalTime startTime, LocalTime endTime);
 
     List<Order> findByBarberIdAndOrderDateOrderByStartTimeAsc(Integer barberId, LocalDate orderDate);
+
+    List<Order> findByCustomerIdAndOrderDateOrderByStartTimeAsc(Integer customerId, LocalDate orderDate);
 }

@@ -13,7 +13,7 @@ public class OrderDetailResponse {
     private Integer id;
     private String serviceName;
     private String serviceType;
-    private Set<ServiceDetailImage> serviceDetailImages;
+    private Set<ImageResponse> serviceDetailImages;
     private Float finalPrice;
     private Float originalPrice;
 }

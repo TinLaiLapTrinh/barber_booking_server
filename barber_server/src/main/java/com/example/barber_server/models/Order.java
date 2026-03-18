@@ -1,6 +1,7 @@
 package com.example.barber_server.models;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -45,6 +46,7 @@ public class Order {
     private Voucher voucher;
 
     @NotNull
+    @FutureOrPresent(message = "Ngày đặt phải là hiện tại hoặc tương lai")
     @Column(name = "order_date", nullable = false)
     private LocalDate orderDate;
 
@@ -60,10 +62,12 @@ public class Order {
     @Lob
     @Column(name = "status")
     private String status;
-    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<OrderDetail> orderDetails = new LinkedHashSet<>();
     @OneToMany(mappedBy = "order",fetch = FetchType.LAZY)
     private Set<Rate> rates = new LinkedHashSet<>();
+    @Column(name = "total_price")
+    private Float totalPrice;
 
 
 }
