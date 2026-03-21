@@ -7,6 +7,7 @@ import com.example.barber_server.models.ServiceDetailImage;
 import com.example.barber_server.services.ServiceDetailService;
 import com.example.barber_server.services.ServiceService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/services")
 @RequiredArgsConstructor
+@Tag(name = "Service Controller", description = "Quản lý dịch vụ")
 public class ServiceController {
     private final ServiceService serviceService;
     private final ServiceDetailService serviceDetailService;

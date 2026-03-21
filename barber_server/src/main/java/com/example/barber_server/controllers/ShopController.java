@@ -9,6 +9,7 @@ import com.example.barber_server.services.ShopService;
 import com.example.barber_server.services.ShopServiceSrvice;
 import com.example.barber_server.services.UploadImageService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/shops")
+@Tag(name = "Shop Controller", description = "Quản lý chi nhánh")
 public class ShopController {
     private final ShopService shopService;
     private final ShopServiceSrvice shopServiceSrvice;

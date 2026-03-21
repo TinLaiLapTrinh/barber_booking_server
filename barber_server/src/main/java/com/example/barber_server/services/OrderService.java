@@ -6,7 +6,6 @@ import com.example.barber_server.dto.dto_response.OrderDetailResponse;
 import com.example.barber_server.dto.dto_response.OrderResponse;
 import com.example.barber_server.models.Order;
 import com.example.barber_server.models.OrderDetail;
-import com.example.barber_server.repositories.OrderRepository;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -24,9 +23,11 @@ public interface OrderService {
 
     OrderDetailResponse addOrderDetail(Integer orderId, OrderDetail orderDetail);
 
-    MessageResponse OrderUpdate(Integer orderId, Map<String, String> params);
-
     List<OrderResponse> findByBarberAndOrderDateOrderByStartTimeAsc(Integer barberId, LocalDate orderDate);
 
     List<OrderResponse> findByCustomerAndOrderDateOrderByStartTimeAsc(Integer customerId,  LocalDate orderDate);
+
+    MessageResponse updateOrder(Integer orderId, Map<String, String> params);
+
+    MessageResponse cancelOrder(Integer orderId);
 }

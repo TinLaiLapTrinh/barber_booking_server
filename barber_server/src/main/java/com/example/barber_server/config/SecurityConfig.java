@@ -32,8 +32,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,"/api/orders/order").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.POST, "/api/shops/shop","/api/services/service",
                                 "/api/services/service/{serviceId}/detail","/api/services/detail/{detailId}/images").hasRole("ADMIN")
-//                        .requestMatchers(HttpMethod.POST, "/api/orders/order")
-//                        .hasAnyAuthority("ROLE_CUSTOMER", "ROLE_BARBER", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/orders/order").hasRole("CUSTOMER")
+                                .requestMatchers(HttpMethod.DELETE, "/api/orders/order/{id}/cancel").hasAnyRole("CUSTOMER", "BARBER", "ADMIN")
+                                .requestMatchers(HttpMethod.PATCH, "/api/orders/order/{id}/update").hasAnyRole("BARBER", "ADMIN")
+//                        .hasAnyAuthority("ROLE_BARBER", "ROLE_ADMIN")
+
                         .anyRequest().authenticated()
                 ).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

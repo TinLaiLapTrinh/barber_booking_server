@@ -1,6 +1,7 @@
 package com.example.barber_server.services.impl;
 
 import com.example.barber_server.dto.dto_response.ImageResponse;
+import com.example.barber_server.exception.ResourceNotFoundException;
 import com.example.barber_server.models.ServiceCategory;
 import com.example.barber_server.models.ServiceDetail;
 import com.example.barber_server.models.ServiceDetailImage;
@@ -43,10 +44,10 @@ public class ServiceDetailServiceImpl implements ServiceDetailService {
     public ServiceDetail addServiceDetail(Integer serviceId, Integer categoryId, ServiceDetail serviceDetail) {
 
         com.example.barber_server.models.Service parentService = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Service ID: " + serviceId));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy dịch vụ số " + serviceId.toString()));
 
         ServiceCategory category = serviceCategoryRepository.findById(categoryId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Category ID: " + categoryId));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục " + categoryId.toString()));
 
         serviceDetail.setService(parentService);
         serviceDetail.setCategory(category);
@@ -59,7 +60,7 @@ public class ServiceDetailServiceImpl implements ServiceDetailService {
     public List<ImageResponse> uploadServiceDetailImages(Integer serviceDetailId, List<MultipartFile> files) {
 
         ServiceDetail detail = serviceDetailRepository.findById(serviceDetailId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết dịch vụ để thêm ảnh"));
+                .orElseThrow(() ->  new ResourceNotFoundException("Không tìm dịch vụ"));
 
         return files.stream().map(file -> {
             try {
@@ -74,8 +75,8 @@ public class ServiceDetailServiceImpl implements ServiceDetailService {
                 return new ImageResponse(savedEntity.getId(),savedEntity.getImage());
 
             } catch (Exception e) {
-                // Ném lỗi để @Transactional thực hiện Rollback nếu cần
-                throw new RuntimeException("Lỗi khi xử lý file " + file.getOriginalFilename() + ": " + e.getMessage());
+
+                throw new ResourceNotFoundException("Lỗi khi xử lý file " + file.getOriginalFilename() + ": " + e.getMessage());
             }
         }).toList();
     }

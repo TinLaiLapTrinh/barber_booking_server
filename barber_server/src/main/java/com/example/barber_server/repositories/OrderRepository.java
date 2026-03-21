@@ -16,6 +16,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
     @Query("SELECT CASE WHEN COUNT(o) > 0 THEN true ELSE false END FROM Order o " +
             "WHERE o.barber.id = :barberId " +
             "AND o.orderDate = :orderDate " +
+            "AND o.status <> com.example.barber_server.models.enums.OrderStatus.CANCELLED " +
             "AND (:startTime < o.endTime AND :endTime > o.startTime)")
     boolean isBarberBusy(Integer barberId, LocalDate orderDate, LocalTime startTime, LocalTime endTime);
 

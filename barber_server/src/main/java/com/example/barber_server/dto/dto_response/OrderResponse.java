@@ -1,5 +1,6 @@
 package com.example.barber_server.dto.dto_response;
 
+import com.example.barber_server.models.enums.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -27,4 +28,9 @@ public class OrderResponse {
     private LocalTime startTime;
     private LocalTime endTime;
     private List<OrderDetailResponse> orderDetails;
+    private String status;
+    private String statusName;
+    private String paymentStatus;
+    private String paymentStatusName;
+    private String paymentMethodName;
 }

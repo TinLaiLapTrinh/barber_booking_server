@@ -1,5 +1,8 @@
 package com.example.barber_server.models;
 
+import com.example.barber_server.models.enums.OrderStatus;
+import com.example.barber_server.models.enums.PaymentMethod;
+import com.example.barber_server.models.enums.PaymentStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
@@ -58,16 +61,24 @@ public class Order {
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
-    @ColumnDefault("'PENDING'")
-    @Lob
-    @Column(name = "status")
-    private String status;
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<OrderDetail> orderDetails = new LinkedHashSet<>();
+
     @OneToMany(mappedBy = "order",fetch = FetchType.LAZY)
     private Set<Rate> rates = new LinkedHashSet<>();
+
     @Column(name = "total_price")
     private Float totalPrice;
+
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
+
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus paymentStatus;
+
+    @Enumerated(EnumType.STRING)
+    private PaymentMethod paymentMethod;
+
 
 
 }

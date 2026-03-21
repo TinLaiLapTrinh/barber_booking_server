@@ -6,14 +6,22 @@ import com.example.barber_server.dto.dto_response.ImageResponse;
 import com.example.barber_server.dto.dto_response.MessageResponse;
 import com.example.barber_server.dto.dto_response.OrderDetailResponse;
 import com.example.barber_server.dto.dto_response.OrderResponse;
+import com.example.barber_server.exception.BusinessException;
+import com.example.barber_server.exception.ResourceNotFoundException;
 import com.example.barber_server.models.*;
+import com.example.barber_server.models.enums.OrderStatus;
+import com.example.barber_server.models.enums.PaymentMethod;
+import com.example.barber_server.models.enums.PaymentStatus;
 import com.example.barber_server.repositories.*;
 import com.example.barber_server.services.OrderService;
+import com.example.barber_server.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
@@ -46,14 +54,20 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Integer createFullOrder(OrderRequest request) {
-
         User customer = userRepository.findById(request.getCustomerId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng"));
         User barber = userRepository.findById(request.getBarberId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thợ"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thợ"));
         Shop shop = shopRepository.findById(request.getShopId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy cửa hàng"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy cửa hàng"));
 
+        if (!request.getEndTime().isAfter(request.getStartTime())) {
+            throw new BusinessException("Giờ kết thúc phải sau giờ bắt đầu!");
+        }
+
+        if (this.checkBarberConflict(barber.getId(), request.getOrderDate(), request.getStartTime(), request.getEndTime())) {
+            throw new IllegalStateException("Thợ đã bận trong khung giờ này!");
+        }
         Order order = new Order();
         order.setCustomer(customer);
         order.setBarber(barber);
@@ -61,7 +75,7 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderDate(request.getOrderDate());
         order.setStartTime(request.getStartTime());
         order.setEndTime(request.getEndTime());
-        order.setStatus("PENDING");
+        order.setStatus(OrderStatus.PENDING);
         if (order.getOrderDetails() == null) {
             order.setOrderDetails(new HashSet<>());
         }
@@ -76,20 +90,12 @@ public class OrderServiceImpl implements OrderService {
             detail.setOriginalPrice(ssd.getPrice());
             detail.setFinalPrice(ssd.getPrice());
 
-            order.getOrderDetails().add(detail); // Thêm vào danh sách của cha
+            order.getOrderDetails().add(detail);
         }
-        if (!order.getEndTime().isAfter(order.getStartTime())) {
-            throw new IllegalArgumentException("Giờ kết thúc phải sau giờ bắt đầu!");
-        }
-
-        if (this.checkBarberConflict(barber.getId(), order.getOrderDate(), order.getStartTime(), order.getEndTime())) {
-            throw new IllegalStateException("Thợ đã bận trong khung giờ này!");
-        }
-
 
         Order savedOrder = orderRepository.save(order);
 
-        return order.getId();
+        return savedOrder.getId();
     }
 
     @Override
@@ -118,11 +124,6 @@ public class OrderServiceImpl implements OrderService {
         OrderDetail orderDetailSaved = orderDetailRepository.save(orderDetail);
 
         return mapToOrderDetailResponse(orderDetailSaved);
-    }
-
-    @Override
-    public MessageResponse OrderUpdate(Integer orderId, Map<String, String> params) {
-        return null;
     }
 
     @Override
@@ -178,8 +179,85 @@ public class OrderServiceImpl implements OrderService {
                 order.getOrderDate(),
                 order.getStartTime(),
                 order.getEndTime(),
-                detailResponses
+                detailResponses,
+                order.getStatus().name(),
+                order.getStatus().getDisplayValue(),
+                order.getPaymentStatus().name(),
+                order.getPaymentStatus().getDisplayValue(),
+                order.getPaymentMethod().getDisplayValue()
         );
     }
+
+    @Override
+    public MessageResponse updateOrder(Integer orderId, Map<String, String> params) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn hàng ID: " + orderId));
+        if (params.containsKey("status")) {
+            String statusStr = params.get("status").toUpperCase();
+            try {
+                OrderStatus status = OrderStatus.valueOf(statusStr);
+                if (order.getStatus() == OrderStatus.COMPLETED) {
+                    throw new BusinessException("Đơn hàng đã hoàn thành, không thể đổi trạng thái!");
+                }
+                else if (order.getStatus() == OrderStatus.CANCELLED) {
+                    throw new BusinessException("Đơn hàng đã huỷ, không thể đổi trạng thái!");
+                }
+
+                order.setStatus(status);
+            } catch (IllegalArgumentException e) {
+                throw new BusinessException("Trạng thái '" + statusStr + "' không hợp lệ!");
+            }
+        }
+        if(params.containsKey("paymentMethod")){
+            String paymentMethodStr = params.get("paymentMethod").toUpperCase();
+            try{
+                PaymentMethod paymentMethod = PaymentMethod.valueOf(paymentMethodStr);
+                order.setPaymentMethod(paymentMethod);
+            } catch (IllegalArgumentException e) {
+                throw new BusinessException("Phương thức thanh toán '" + paymentMethodStr + "' không hợp lệ!");
+            }
+        }
+        if(params.containsKey("paymentStatus")){
+            if (!SecurityUtils.isAdmin() && !SecurityUtils.isBarber()) {
+                throw new AccessDeniedException("Khách hàng không có quyền cập nhật trạng thái thanh toán!");
+            }
+            String paymentStatusStr = params.get("paymentStatus").toUpperCase();
+            try{
+                PaymentStatus paymentStatus = PaymentStatus.valueOf(paymentStatusStr);
+                order.setPaymentStatus(paymentStatus);
+            } catch (IllegalArgumentException e) {
+                throw new BusinessException("Phương thức thanh toán '" + paymentStatusStr + "' không hợp lệ!");
+            }
+        }
+        orderRepository.save(order);
+        return new MessageResponse("Cập nhật đơn hàng thành công!", order.getId());
+    }
+
+    @Override
+    public MessageResponse cancelOrder(Integer orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn hàng"));
+        SecurityUtils.checkAuthority(order.getCustomer().getId());
+
+        if (!SecurityUtils.isAdmin() && !SecurityUtils.isBarber()) {
+            LocalDateTime appointmentTime = LocalDateTime.of(order.getOrderDate(), order.getStartTime());
+
+            if (LocalDateTime.now().isAfter(appointmentTime.minusMinutes(60))) {
+                throw new BusinessException("Không thể hủy lịch trước giờ hẹn 60 phút. Vui lòng liên hệ hotline!");
+            }
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+
+//        if (order.getPaymentStatus() == PaymentStatus.PAID && order.getPaymentMethod() != PaymentMethod.CASH) {
+//            order.setPaymentStatus(PaymentStatus.REFUNDED);
+//        }
+
+        orderRepository.save(order);
+        return new MessageResponse("Đã hủy đơn hàng thành công!", order.getId());
+
+    }
+
 
 }
