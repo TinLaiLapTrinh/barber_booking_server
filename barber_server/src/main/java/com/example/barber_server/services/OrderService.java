@@ -30,4 +30,6 @@ public interface OrderService {
     MessageResponse updateOrder(Integer orderId, Map<String, String> params);
 
     MessageResponse cancelOrder(Integer orderId);
+
+    Float totalPrice(Integer orderId);
 }

@@ -250,14 +250,14 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(OrderStatus.CANCELLED);
 
-//        if (order.getPaymentStatus() == PaymentStatus.PAID && order.getPaymentMethod() != PaymentMethod.CASH) {
-//            order.setPaymentStatus(PaymentStatus.REFUNDED);
-//        }
-
         orderRepository.save(order);
         return new MessageResponse("Đã hủy đơn hàng thành công!", order.getId());
 
     }
 
+    @Override
+    public Float totalPrice(Integer orderId) {
+        return orderRepository.sumFinalPriceByOrderId(orderId);
+    }
 
 }

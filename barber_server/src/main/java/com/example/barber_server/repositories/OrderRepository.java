@@ -1,6 +1,7 @@
 package com.example.barber_server.repositories;
 
 import com.example.barber_server.models.Order;
+import feign.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -23,4 +24,10 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
     List<Order> findByBarberIdAndOrderDateOrderByStartTimeAsc(Integer barberId, LocalDate orderDate);
 
     List<Order> findByCustomerIdAndOrderDateOrderByStartTimeAsc(Integer customerId, LocalDate orderDate);
+
+    Order findFirstById(Integer id);
+
+    @Query("SELECT SUM(d.finalPrice) FROM OrderDetail d WHERE d.order.id = :orderId")
+    Float sumFinalPriceByOrderId(@Param("orderId") Integer orderId);
+
 }
