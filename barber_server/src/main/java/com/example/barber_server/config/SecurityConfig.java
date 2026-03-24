@@ -30,7 +30,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/login", "/api/users/customers","/api/users/barber").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/services/**","/api/shops/shop").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/orders/order").permitAll()
-                                .requestMatchers("/api/payments/momo-callback").permitAll()
+                                .requestMatchers("/api/payments/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/shops/shop","/api/services/service",
                                 "/api/services/service/{serviceId}/detail","/api/services/detail/{detailId}/images").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/orders/order").hasRole("CUSTOMER")
