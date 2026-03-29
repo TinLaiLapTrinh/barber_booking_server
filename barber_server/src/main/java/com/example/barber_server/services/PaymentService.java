@@ -145,11 +145,9 @@ public class PaymentService {
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
         vnp_Params.put("vnp_CreateDate", VNPayConfig.getCurrentTime());
 
-        // 1. Sắp xếp tham số theo Alphabet (Bắt buộc)
         List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
         Collections.sort(fieldNames);
 
-        // 2. Nối chuỗi Query String và chuỗi băm Hash
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
         Iterator<String> itr = fieldNames.iterator();
@@ -208,7 +206,7 @@ public class PaymentService {
 
         if (!checkSum.equalsIgnoreCase(vnp_SecureHash)) {
             log.error("CẢNH BÁO: Chữ ký VNPAY không khớp!");
-            log.info("Chuỗi hash tự tính: [{}]", hashData.toString()); // Log ra để đối chiếu nếu vẫn lỗi
+            log.info("Chuỗi hash tự tính: [{}]", hashData.toString());
             response.put("RspCode", "97");
             response.put("Message", "Invalid Checksum");
             return response;
