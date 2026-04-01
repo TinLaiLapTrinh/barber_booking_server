@@ -16,6 +16,7 @@ public class OrderRequest {
     @NotNull(message = "ID thợ không được để trống")
     private Integer barberId;
 
+    private Integer voucherId;
     @NotNull(message = "ID cửa hàng không được để trống")
     private Integer shopId;
 

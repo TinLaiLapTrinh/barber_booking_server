@@ -27,7 +27,4 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
 
     Order findFirstById(Integer id);
 
-    @Query("SELECT SUM(d.finalPrice) FROM OrderDetail d WHERE d.order.id = :orderId")
-    Float sumFinalPriceByOrderId(@Param("orderId") Integer orderId);
-
 }

@@ -1,6 +1,7 @@
 package com.example.barber_server.repositories;
 
 
+import com.example.barber_server.models.Service;
 import com.example.barber_server.models.Shop;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

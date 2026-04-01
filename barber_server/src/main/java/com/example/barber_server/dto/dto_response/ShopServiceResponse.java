@@ -9,5 +9,7 @@ public class ShopServiceResponse {
     private Integer id;
     private Integer shopId;
     private Integer serviceId;
+    private String serviceName;
+    private String serviceDescription;
 
 }

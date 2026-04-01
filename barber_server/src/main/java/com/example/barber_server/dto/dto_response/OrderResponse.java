@@ -33,4 +33,7 @@ public class OrderResponse {
     private String paymentStatus;
     private String paymentStatusName;
     private String paymentMethodName;
+    private Float totalPrice;
+    private Float finalPrice;
+
 }

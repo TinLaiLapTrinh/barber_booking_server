@@ -78,7 +78,8 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
-
+    @Column(name = "final_price")
+    private Float finalPrice;
 
 
 }

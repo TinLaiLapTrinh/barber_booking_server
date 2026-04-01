@@ -7,8 +7,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class ShopServiceDetailResponse {
     private Integer id;
-    private Integer serviceDetailId;
-    private String name; // Tên món (Cắt tóc Fade, ...)
+    private ServiceDetailResponse serviceDetail;
     private Float price;
     private Boolean isActive;
 }

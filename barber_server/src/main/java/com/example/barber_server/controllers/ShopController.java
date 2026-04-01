@@ -2,12 +2,16 @@ package com.example.barber_server.controllers;
 
 
 import com.example.barber_server.dto.dto_request.ShopRequest;
+import com.example.barber_server.dto.dto_request.VoucherRequest;
+import com.example.barber_server.dto.dto_response.MessageResponse;
+import com.example.barber_server.dto.dto_response.ShopServiceDetailResponse;
 import com.example.barber_server.dto.dto_response.ShopServiceResponse;
-import com.example.barber_server.models.ServiceDetail;
+import com.example.barber_server.dto.dto_response.VoucherResponse;
 import com.example.barber_server.models.Shop;
 import com.example.barber_server.services.ShopService;
-import com.example.barber_server.services.ShopServiceSrvice;
+import com.example.barber_server.services.ShopServiceService;
 import com.example.barber_server.services.UploadImageService;
+import com.example.barber_server.services.VoucherService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +32,9 @@ import java.util.Map;
 @Tag(name = "Shop Controller", description = "Quản lý chi nhánh")
 public class ShopController {
     private final ShopService shopService;
-    private final ShopServiceSrvice shopServiceSrvice;
+    private final ShopServiceService shopServiceService;
     private final UploadImageService uploadService;
+    private final VoucherService voucherService;
 
     @Operation(summary = "Đăng ký tiệm cắt tóc", description = "Đăng ký tiệm cắt tóc")
     @PostMapping(value = "/shop", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -65,13 +70,48 @@ public class ShopController {
 
     @Operation(summary = "Gán dịch vụ cho shop", description = "Tạo liên kết giữa một cửa hàng và một dịch vụ hệ thống")
     @PostMapping("/shop/{shopId}/service")
-    public ResponseEntity<ShopServiceResponse> createShopService(
+    public ResponseEntity<MessageResponse> createShopService(
             @PathVariable Integer shopId,
             @RequestParam Integer serviceId) {
 
-        ShopServiceResponse response = shopServiceSrvice.createShopService(shopId, serviceId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(shopServiceService.createShopService(shopId, serviceId));
     }
+
+    @Operation(summary = "Hiển thị các dịch vụ của shop", description = "Hiển thị các dịch vụ hiện cố của shop")
+    @GetMapping("/shop/{shopId}/services")
+    public ResponseEntity<List<ShopServiceResponse>> getShopServiceByShopId(@PathVariable Integer shopId) {
+        return ResponseEntity.status(HttpStatus.OK).body(shopServiceService.findByShop_id(shopId));
+    }
+
+    @GetMapping("shop/{shopId}/shop-service/{serviceId}/service-detail")
+    public ResponseEntity<Page<ShopServiceDetailResponse>> getShopServiceDetail(
+            @PathVariable Integer shopId,
+            @PathVariable Integer serviceId,
+            @RequestParam Integer categoryId,
+            @org.springframework.data.web.PageableDefault(size = 10, page = 0) org.springframework.data.domain.Pageable pageable
+    ){
+        return ResponseEntity.status(HttpStatus.OK).body(shopServiceService.findShopServiceDetailByCategoryId(serviceId,categoryId,pageable));
+    }
+
+    @Operation(summary = "Danh sách phiếu giảm giá của shop", description = "Danh sách phiếu giảm giá")
+    @GetMapping("/shop/{shopId}/vouchers/conditions")
+    public ResponseEntity<List<VoucherResponse>> getShopVouchers(
+            @PathVariable Integer shopId,
+            @RequestParam Map<String, String> conditions
+    ){
+    List<VoucherResponse> vouchers = voucherService.findAllVouchersByShopId_ByCondition(shopId,conditions);
+        return ResponseEntity.ok(vouchers);
+    }
+    @Operation(summary = "Tạo phiếu giảm giá cho shop", description = "Tạo phiếu giảm giá")
+    @PostMapping(value = "/shop/{shopId}/voucher", consumes =  MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MessageResponse> createShopVoucher(
+            @PathVariable Integer shopId,
+            @ModelAttribute VoucherRequest voucherRequest
+    ){
+        return ResponseEntity.status(HttpStatus.CREATED).body(voucherService.createVoucher(voucherRequest, shopId));
+    }
+
+
 
 
 }

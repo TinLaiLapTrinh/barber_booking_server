@@ -14,11 +14,11 @@ import com.example.barber_server.models.enums.PaymentMethod;
 import com.example.barber_server.models.enums.PaymentStatus;
 import com.example.barber_server.repositories.*;
 import com.example.barber_server.services.OrderService;
+import com.example.barber_server.services.VoucherService;
 import com.example.barber_server.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,7 +26,6 @@ import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,6 +36,8 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final ShopServiceDetailRepository shopServiceDetailRepository;
+    private final VoucherService  voucherService;
+    private final VoucherRepository voucherRepository;
 
 
     @Override
@@ -61,6 +62,8 @@ public class OrderServiceImpl implements OrderService {
         Shop shop = shopRepository.findById(request.getShopId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy cửa hàng"));
 
+        Voucher voucher = voucherRepository.findVoucherById(request.getVoucherId());
+
         if (!request.getEndTime().isAfter(request.getStartTime())) {
             throw new BusinessException("Giờ kết thúc phải sau giờ bắt đầu!");
         }
@@ -72,6 +75,7 @@ public class OrderServiceImpl implements OrderService {
         order.setCustomer(customer);
         order.setBarber(barber);
         order.setShop(shop);
+        order.setVoucher(voucher);
         order.setOrderDate(request.getOrderDate());
         order.setStartTime(request.getStartTime());
         order.setEndTime(request.getEndTime());
@@ -79,6 +83,8 @@ public class OrderServiceImpl implements OrderService {
         if (order.getOrderDetails() == null) {
             order.setOrderDetails(new HashSet<>());
         }
+
+        float runningTotal = 0;
 
         for (OrderDetailRequest dReq : request.getDetails()) {
             ShopServiceDetail ssd = shopServiceDetailRepository.findById(dReq.getShopServiceDetailId())
@@ -91,39 +97,14 @@ public class OrderServiceImpl implements OrderService {
             detail.setFinalPrice(ssd.getPrice());
 
             order.getOrderDetails().add(detail);
+            runningTotal += ssd.getPrice();
         }
+
+        order.setTotalPrice(runningTotal);
 
         Order savedOrder = orderRepository.save(order);
 
         return savedOrder.getId();
-    }
-
-    @Override
-    @Transactional
-    public OrderResponse addOrder(Order order) {
-
-        if (!order.getEndTime().isAfter(order.getStartTime())) {
-            throw new IllegalArgumentException("Giờ kết thúc phải sau giờ bắt đầu!");
-        }
-
-        if (this.checkBarberConflict(order.getBarber().getId(), order.getOrderDate(), order.getStartTime(), order.getEndTime())) {
-            throw new IllegalStateException("Thợ đã có lịch trong khung giờ này!");
-        }
-
-        Order savedOrder = orderRepository.save(order);
-        return convertToResponse(savedOrder);
-    }
-
-    @Override
-    @Transactional
-    public OrderDetailResponse addOrderDetail(Integer orderId, OrderDetail orderDetail) {
-
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch đặt để thêm dịch vụ"));
-        orderDetail.setOrder(order);
-        OrderDetail orderDetailSaved = orderDetailRepository.save(orderDetail);
-
-        return mapToOrderDetailResponse(orderDetailSaved);
     }
 
     @Override
@@ -184,7 +165,9 @@ public class OrderServiceImpl implements OrderService {
                 order.getStatus().getDisplayValue(),
                 order.getPaymentStatus().name(),
                 order.getPaymentStatus().getDisplayValue(),
-                order.getPaymentMethod().getDisplayValue()
+                order.getPaymentMethod().getDisplayValue(),
+                order.getTotalPrice(),
+                order.getFinalPrice()
         );
     }
 
@@ -256,8 +239,33 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Float totalPrice(Integer orderId) {
-        return orderRepository.sumFinalPriceByOrderId(orderId);
+    public Float getfinalPrice(Order order) {
+
+        if (order.getVoucher() == null) {
+            return order.getTotalPrice();
+        }
+
+        Voucher voucher = order.getVoucher();
+        Float originalPrice = order.getTotalPrice();
+        float discountAmount = 0;
+
+        if (originalPrice < voucher.getMinOrderValue()) {
+            return originalPrice;
+        }
+
+        if (Boolean.TRUE.equals(voucher.getDiscountType())) {
+            discountAmount = (float) (originalPrice * (voucher.getDiscount() / 100.0));
+
+            if (voucher.getMaxDiscountValue() != null && voucher.getMaxDiscountValue() > 0) {
+                discountAmount = Math.min(discountAmount, voucher.getMaxDiscountValue().floatValue());
+            }
+        } else {
+
+            discountAmount = voucher.getDiscount().floatValue();
+        }
+
+        float finalPrice = originalPrice - discountAmount;
+        return Math.max(finalPrice, 0);
     }
 
 }

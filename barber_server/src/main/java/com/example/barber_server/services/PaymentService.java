@@ -118,7 +118,8 @@ public class PaymentService {
             Order order = orderRepository.findFirstById(originalOrderId);
             order.setPaymentStatus(PaymentStatus.PAID);
             order.setPaymentMethod(PaymentMethod.MOMO);
-            order.setTotalPrice(Float.parseFloat(amount));
+            order.setFinalPrice(Float.parseFloat(amount));
+
             orderRepository.save(order);
             log.info("--- THÀNH CÔNG: Đơn hàng #{} đã thanh toán! ---", originalOrderId);
 
@@ -193,7 +194,6 @@ public class PaymentService {
         StringJoiner hashData = new StringJoiner("&");
         for (Map.Entry<String, String> entry : fields.entrySet()) {
             try {
-                // CỰC KỲ QUAN TRỌNG: Phải encode value thì mới khớp với chữ ký VNPAY gửi về
                 String encodedValue = URLEncoder.encode(entry.getValue(), StandardCharsets.US_ASCII.toString());
                 hashData.add(entry.getKey() + "=" + encodedValue);
             } catch (Exception e) {
@@ -228,6 +228,11 @@ public class PaymentService {
             } else {
                 order.setPaymentStatus(PaymentStatus.PAID);
                 order.setPaymentMethod(PaymentMethod.VNPAY);
+                String vnpAmountStr = queryParams.get("vnp_Amount");
+                if (vnpAmountStr != null) {
+                    float finalAmount = Float.parseFloat(vnpAmountStr) / 100;
+                    order.setFinalPrice(finalAmount);
+                }
                 orderRepository.save(order);
                 log.info("--- THÀNH CÔNG: Đơn hàng VNPAY #{} đã thanh toán! ---", originalOrderId);
 

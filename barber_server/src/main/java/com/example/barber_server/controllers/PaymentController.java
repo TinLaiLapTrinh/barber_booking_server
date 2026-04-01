@@ -2,6 +2,8 @@ package com.example.barber_server.controllers;
 
 
 import com.example.barber_server.dto.dto_response.MomoResponse;
+import com.example.barber_server.models.Order;
+import com.example.barber_server.repositories.OrderRepository;
 import com.example.barber_server.services.OrderService;
 import com.example.barber_server.services.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,14 +24,17 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final OrderService orderService;
+    private final OrderRepository orderRepository;
 
     @Operation(summary = "Thanh toán lịch đặt bằng Momo")
     @PostMapping("/momo/{orderId}")
     public ResponseEntity<MomoResponse> createPayment(
             @PathVariable Integer orderId) {
 
-        log.info("Yêu cầu tạo link MoMo cho đơn hàng: #{} với số tiền: {}", orderId, orderService.totalPrice(orderId));
-        Long amount = Long.parseLong(orderService.totalPrice(orderId).toString());
+        Order order = orderRepository.findById(orderId).orElse(null);
+        Float finalPrice = orderService.getfinalPrice(order);
+        log.info("Yêu cầu tạo link MoMo cho đơn hàng: #{} với số tiền: {}", orderId, finalPrice);
+        Long amount = Long.parseLong(finalPrice.toString());
         MomoResponse response = paymentService.initiateMomoPayment(orderId,amount);
         return ResponseEntity.ok(response);
     }
@@ -47,8 +52,9 @@ public class PaymentController {
     public ResponseEntity<Map<String, String>> createVNPayPayment(
             @PathVariable Integer orderId,
             HttpServletRequest request) {
-        Float totalPrice = orderService.totalPrice(orderId);
-        long amount = Math.round(totalPrice);
+        Order order = orderRepository.findById(orderId).orElse(null);
+        Float finalPrice = orderService.getfinalPrice(order);
+        long amount = Math.round(finalPrice);
 
         log.info("Yêu cầu tạo link VNPay cho đơn hàng: #{} với số tiền: {}", orderId, amount);
         String txnRef = orderId + "_" + System.currentTimeMillis();
@@ -63,7 +69,7 @@ public class PaymentController {
     }
 
     @Operation(summary = "Nhận phản hồi từ VNPay (IPN)")
-    @GetMapping("/vnpay-callback") // VNPAY gọi về qua GET
+    @GetMapping("/vnpay-callback")
     public ResponseEntity<Map<String, String>> handleVNPayCallback(
             @RequestParam Map<String, String> queryParams) {
         Map<String, String> result = paymentService.processVNPayCallback(queryParams);

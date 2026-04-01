@@ -8,5 +8,9 @@ import java.util.List;
 
 public interface VoucherRepository extends JpaRepository<Voucher, Integer>, JpaSpecificationExecutor<Voucher> {
 
+    Voucher findVoucherById(Integer id);
+
     List<Voucher> findByShopIdAndIsActiveTrue(Integer shopId);
+
+
 }

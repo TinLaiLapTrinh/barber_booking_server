@@ -36,6 +36,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/orders/order").hasRole("CUSTOMER")
                                 .requestMatchers(HttpMethod.DELETE, "/api/orders/order/{id}/cancel").hasAnyRole("CUSTOMER", "BARBER", "ADMIN")
                                 .requestMatchers(HttpMethod.PATCH, "/api/orders/order/{id}/update").hasAnyRole("BARBER", "ADMIN")
+                                .requestMatchers(HttpMethod.GET,"api/shops/shop/{id}/vouchers/conditions","api/shops/shop/{id}/services" ).permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/shops/shop/{id}/voucher").hasRole("ADMIN")
 //                        .hasAnyAuthority("ROLE_BARBER", "ROLE_ADMIN")
 
                         .anyRequest().authenticated()

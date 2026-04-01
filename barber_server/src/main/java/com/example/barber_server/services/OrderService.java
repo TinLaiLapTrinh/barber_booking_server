@@ -19,10 +19,6 @@ public interface OrderService {
 
     Integer createFullOrder(OrderRequest request);
 
-    OrderResponse addOrder(Order order);
-
-    OrderDetailResponse addOrderDetail(Integer orderId, OrderDetail orderDetail);
-
     List<OrderResponse> findByBarberAndOrderDateOrderByStartTimeAsc(Integer barberId, LocalDate orderDate);
 
     List<OrderResponse> findByCustomerAndOrderDateOrderByStartTimeAsc(Integer customerId,  LocalDate orderDate);
@@ -31,5 +27,5 @@ public interface OrderService {
 
     MessageResponse cancelOrder(Integer orderId);
 
-    Float totalPrice(Integer orderId);
+    Float getfinalPrice(Order order);
 }

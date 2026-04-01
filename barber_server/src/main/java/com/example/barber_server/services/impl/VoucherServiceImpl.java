@@ -11,12 +11,15 @@ import com.example.barber_server.repositories.VoucherRepository;
 import com.example.barber_server.services.VoucherService;
 import lombok.AllArgsConstructor;
 import lombok.Setter;
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Setter
 @AllArgsConstructor
+@Service
 public class VoucherServiceImpl implements VoucherService {
     private final VoucherRepository voucherRepository;
     private final ShopRepository shopRepository;
@@ -38,6 +41,7 @@ public class VoucherServiceImpl implements VoucherService {
 
         return new MessageResponse("Tạo Voucher thành công cho Shop với ID: " , shop.getId());
     }
+
     @Override
     public VoucherResponse getVoucherById(Integer voucherId) {
         Voucher voucher = voucherRepository.findById(voucherId)
@@ -59,8 +63,56 @@ public class VoucherServiceImpl implements VoucherService {
     }
 
     @Override
-    public List<VoucherResponse> findAllVouchersByShopId_ByCondition(Integer shopId, Map<String, String> condition) {
-        return List.of();
+    public List<VoucherResponse> findAllVouchersByShopId_ByCondition(Integer shopId, Map<String, String> conditions) {
+        double totalPrice = 0.0;
+        try {
+            if (conditions.containsKey("totalPrice")) {
+                totalPrice = Double.parseDouble(conditions.get("totalPrice"));
+            }
+        } catch (NumberFormatException e) {
+            totalPrice = 0.0;
+        }
+
+        List<Voucher> vouchers = voucherRepository.findByShopIdAndIsActiveTrue(shopId);
+
+        final Double finalTotalPrice = totalPrice;
+
+        return vouchers.stream()
+                .map(v -> {
+
+                    double discountAmount = calculateActualDiscount(v, finalTotalPrice);
+                    boolean eligible = finalTotalPrice >= v.getMinOrderValue();
+
+                    VoucherResponse res = this.voucherConvertToResponseUse(v, discountAmount, eligible);
+
+                    res.setActualDiscount(discountAmount);
+                    res.setIsEligible(eligible);
+                    return res;
+                })
+
+                .sorted((v1, v2) -> {
+
+                    int eligibleComp = v2.getIsEligible().compareTo(v1.getIsEligible());
+                    if (eligibleComp != 0) return eligibleComp;
+
+                    return v2.getActualDiscount().compareTo(v1.getActualDiscount());
+                })
+                .collect(Collectors.toList());
+    }
+
+    private double calculateActualDiscount(Voucher v, Double totalPrice) {
+        if (totalPrice < v.getMinOrderValue()) return 0.0;
+
+        double amount = 0.0;
+        if (Boolean.TRUE.equals(v.getDiscountType())) { // Phần trăm
+            amount = totalPrice * (v.getDiscount() / 100.0);
+            if (v.getMaxDiscountValue() != null && v.getMaxDiscountValue() > 0) {
+                amount = Math.min(amount, v.getMaxDiscountValue());
+            }
+        } else {
+            amount = v.getDiscount();
+        }
+        return amount;
     }
 
     @Override
@@ -129,8 +181,15 @@ public class VoucherServiceImpl implements VoucherService {
 
     private VoucherResponse voucherConvertToResponse(Voucher voucher) {
         return new VoucherResponse(voucher.getId(), voucher.getName(), voucher.getDiscount(),voucher.getExpiry(),
-                voucher.getDateStart(),voucher.getExpiryDate(),voucher.getShop().getId(), voucher.getIsActive());
+                voucher.getDateStart(),voucher.getExpiryDate(),voucher.getShop().getId(), voucher.getIsActive(), null, null);
     }
+
+    private VoucherResponse voucherConvertToResponseUse(Voucher voucher, Double actualDiscount, Boolean isEligible) {
+        return new VoucherResponse(voucher.getId(), voucher.getName(), voucher.getDiscount(),voucher.getExpiry(),
+                voucher.getDateStart(),voucher.getExpiryDate(),voucher.getShop().getId(), voucher.getIsActive(), actualDiscount, isEligible);
+    }
+
+
 
     private Voucher requestConvertToVoucher(VoucherRequest request, Shop shop) {
         Voucher entity = new Voucher();
