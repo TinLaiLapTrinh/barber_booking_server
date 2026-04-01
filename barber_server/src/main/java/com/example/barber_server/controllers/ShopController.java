@@ -77,12 +77,13 @@ public class ShopController {
         return ResponseEntity.status(HttpStatus.CREATED).body(shopServiceService.createShopService(shopId, serviceId));
     }
 
-    @Operation(summary = "Hiển thị các dịch vụ của shop", description = "Hiển thị các dịch vụ hiện cố của shop")
+    @Operation(summary = "Hiển thị các dịch vụ của shop", description = "Hiển thị các dịch vụ hiện có của shop")
     @GetMapping("/shop/{shopId}/services")
     public ResponseEntity<List<ShopServiceResponse>> getShopServiceByShopId(@PathVariable Integer shopId) {
         return ResponseEntity.status(HttpStatus.OK).body(shopServiceService.findByShop_id(shopId));
     }
 
+    @Operation(summary = "Hiển thị các chi tiết dịch vụ của shop", description = "Hiển thị các chi tiết dịch vụ hiện cố của shop")
     @GetMapping("shop/{shopId}/shop-service/{serviceId}/service-detail")
     public ResponseEntity<Page<ShopServiceDetailResponse>> getShopServiceDetail(
             @PathVariable Integer shopId,
@@ -102,6 +103,7 @@ public class ShopController {
     List<VoucherResponse> vouchers = voucherService.findAllVouchersByShopId_ByCondition(shopId,conditions);
         return ResponseEntity.ok(vouchers);
     }
+
     @Operation(summary = "Tạo phiếu giảm giá cho shop", description = "Tạo phiếu giảm giá")
     @PostMapping(value = "/shop/{shopId}/voucher", consumes =  MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MessageResponse> createShopVoucher(

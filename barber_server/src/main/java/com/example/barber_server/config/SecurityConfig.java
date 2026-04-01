@@ -26,22 +26,28 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**","/error").permitAll()
-                        .requestMatchers("/api/users/login", "/api/users/customers","/api/users/barber").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/services/**","/api/shops/shop").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/orders/order").permitAll()
-                                .requestMatchers("/api/payments/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/shops/shop","/api/services/service",
-                                "/api/services/service/{serviceId}/detail","/api/services/detail/{detailId}/images").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/orders/order").hasRole("CUSTOMER")
-                                .requestMatchers(HttpMethod.DELETE, "/api/orders/order/{id}/cancel").hasAnyRole("CUSTOMER", "BARBER", "ADMIN")
-                                .requestMatchers(HttpMethod.PATCH, "/api/orders/order/{id}/update").hasAnyRole("BARBER", "ADMIN")
-                                .requestMatchers(HttpMethod.GET,"api/shops/shop/{id}/vouchers/conditions","api/shops/shop/{id}/services" ).permitAll()
-                                .requestMatchers(HttpMethod.POST, "/api/shops/shop/{id}/voucher").hasRole("ADMIN")
-//                        .hasAnyAuthority("ROLE_BARBER", "ROLE_ADMIN")
 
+                        // 1. PUBLIC: Các endpoint không cần đăng nhập
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/error").permitAll()
+                        .requestMatchers("/api/users/login", "/api/users/customers", "/api/users/barber").permitAll()
+                        .requestMatchers("/api/payments/**").permitAll()
+
+                        // 2. PUBLIC GET: Cho phép xem thông tin chung (Shop, Service, Voucher, Detail)
+                        .requestMatchers(HttpMethod.GET, "/api/services/**", "/api/shops/shop/**","/api/orders/order").permitAll()
+
+                        // 3. ORDER LOGIC: Phân quyền theo vai trò thao tác đơn hàng
+                        .requestMatchers(HttpMethod.POST, "/api/orders/order").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/orders/order/*/cancel").hasAnyRole("CUSTOMER", "BARBER", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/orders/order/*/update").hasAnyRole("BARBER", "ADMIN")
+
+                        // 4. ADMIN ONLY: Quản lý hệ thống, tạo Shop, Service, Voucher
+                        .requestMatchers(HttpMethod.POST, "/api/shops/shop/**", "/api/services/**").hasRole("ADMIN")
+
+                        // 5. CÒN LẠI: Tất cả các request khác phải đăng nhập
                         .anyRequest().authenticated()
-                ).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                )
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 }

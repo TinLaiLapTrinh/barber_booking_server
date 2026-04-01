@@ -161,11 +161,11 @@ public class OrderServiceImpl implements OrderService {
                 order.getStartTime(),
                 order.getEndTime(),
                 detailResponses,
-                order.getStatus().name(),
-                order.getStatus().getDisplayValue(),
-                order.getPaymentStatus().name(),
-                order.getPaymentStatus().getDisplayValue(),
-                order.getPaymentMethod().getDisplayValue(),
+                order.getStatus() != null ? order.getStatus().name() : null,
+                order.getStatus() != null ? order.getStatus().getDisplayValue() : null,
+                order.getPaymentStatus() != null ? order.getPaymentStatus().name() : null,
+                order.getPaymentStatus() != null ? order.getPaymentStatus().getDisplayValue() : null,
+                order.getPaymentMethod() != null ? order.getPaymentMethod().getDisplayValue() : null,
                 order.getTotalPrice(),
                 order.getFinalPrice()
         );
