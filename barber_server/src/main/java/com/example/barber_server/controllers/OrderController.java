@@ -107,10 +107,10 @@ public class OrderController {
     }
 
     @Operation(summary = "Cập nhật đặt lịch")
-    @PatchMapping(value = "/order/{id}/update", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PatchMapping(value = "/order/{id}/update")
     public ResponseEntity<MessageResponse> updateOrder(
             @PathVariable Integer id,
-            @RequestBody Map<String, String> params,
+            @RequestParam Map<String, String> params,
             @AuthenticationPrincipal UserPrincipal principal
     ){
 
