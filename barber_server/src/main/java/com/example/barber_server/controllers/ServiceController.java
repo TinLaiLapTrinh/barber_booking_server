@@ -32,6 +32,7 @@ public class ServiceController {
         return ResponseEntity.status(HttpStatus.CREATED).body(serviceService.addService(service));
     }
 
+    @Operation(summary = "Danh sách dịch vụ")
     @GetMapping("/services")
     public ResponseEntity<List<Service>> getServices() {
         return ResponseEntity.ok(serviceService.findAllService());
