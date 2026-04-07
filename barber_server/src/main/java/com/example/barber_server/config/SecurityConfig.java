@@ -33,7 +33,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/payments/**").permitAll()
 
                         // 2. PUBLIC GET: Cho phép xem thông tin chung (Shop, Service, Voucher, Detail)
-                        .requestMatchers(HttpMethod.GET, "/api/services/**", "/api/shops/shop/**","/api/orders/order").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/services/**", "/api/shops/**","/api/orders/order").permitAll()
 
                         // 3. ORDER LOGIC: Phân quyền theo vai trò thao tác đơn hàng
                         .requestMatchers(HttpMethod.POST, "/api/orders/order").permitAll()
