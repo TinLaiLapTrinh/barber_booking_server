@@ -29,7 +29,7 @@ public class SecurityConfig {
 
                         // 1. PUBLIC: Các endpoint không cần đăng nhập
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/error").permitAll()
-                        .requestMatchers("/api/users/login", "/api/users/customers", "/api/users/barber").permitAll()
+                        .requestMatchers("/api/users/login", "/api/users/profile","/api/users/customers", "/api/users/barber").permitAll()
                         .requestMatchers("/api/payments/**").permitAll()
 
                         // 2. PUBLIC GET: Cho phép xem thông tin chung (Shop, Service, Voucher, Detail)

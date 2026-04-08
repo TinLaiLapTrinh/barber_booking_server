@@ -4,6 +4,7 @@ package com.example.barber_server.controllers;
 import com.example.barber_server.auth.JwtService;
 import com.example.barber_server.dto.AuthResponse;
 import com.example.barber_server.dto.LoginRequest;
+import com.example.barber_server.dto.dto_response.UserPrincipal;
 import com.example.barber_server.models.User;
 import com.example.barber_server.services.UploadImageService;
 import com.example.barber_server.services.UserService;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,6 +37,8 @@ public class UserController
     }
 
 
+
+
     @Operation(summary = "Đăng nhập hệ thống", description = "Nhận username/password và trả về JWT")
     @PostMapping("/login")
     public ResponseEntity<?> login(@ModelAttribute LoginRequest request) {
@@ -44,6 +48,16 @@ public class UserController
             return ResponseEntity.ok(new AuthResponse(token));
         }
         return ResponseEntity.status(401).body("Invalid credentials");
+    }
+
+    @Operation(summary = "Lấy thông tin người dùng hiện tại", description = "Dùng Token để lấy Profile")
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserPrincipal principal) {
+        if (principal != null) {
+            User user = userService.getUserByUsername(principal.getUsername());
+            return ResponseEntity.ok(user);
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User không tồn tại hoặc Token hết hạn");
     }
 
     @Operation(summary = "Đăng ký khách hàng", description = "Nhận đăng ký khách hàng")

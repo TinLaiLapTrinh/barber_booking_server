@@ -11,5 +11,7 @@ public class ShopRequest {
     private String provinceCode;
     private String wardCode;
     private String avatar;
+    private String background;
+
 
 }

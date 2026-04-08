@@ -45,6 +45,9 @@ public class Shop {
     @Size(max = 255)
     @Column(name = "avatar")
     private String avatar;
+    @Size(max = 255)
+    @Column(name = "background")
+    private String background;
 
 
 }

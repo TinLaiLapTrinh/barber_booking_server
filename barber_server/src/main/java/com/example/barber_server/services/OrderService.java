@@ -2,10 +2,8 @@ package com.example.barber_server.services;
 
 import com.example.barber_server.dto.dto_request.OrderRequest;
 import com.example.barber_server.dto.dto_response.MessageResponse;
-import com.example.barber_server.dto.dto_response.OrderDetailResponse;
 import com.example.barber_server.dto.dto_response.OrderResponse;
 import com.example.barber_server.models.Order;
-import com.example.barber_server.models.OrderDetail;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -27,5 +25,5 @@ public interface OrderService {
 
     MessageResponse cancelOrder(Integer orderId);
 
-    Float getfinalPrice(Order order);
+    Float getFinalPrice(Order order);
 }

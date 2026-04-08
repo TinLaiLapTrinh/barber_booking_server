@@ -24,7 +24,7 @@ public class MomoRequest {
     private String ipnUrl;
 
     @Builder.Default
-    private String extraData = ""; // MoMo bắt buộc phải có, dù là chuỗi rỗng
+    private String extraData = "";
 
     private String requestType;
     private String signature;

@@ -1,11 +1,13 @@
 package com.example.barber_server.services.impl;
 
 import com.example.barber_server.dto.dto_request.ShopRequest;
+import com.example.barber_server.dto.dto_response.ShopResponse;
 import com.example.barber_server.models.Shop;
 import com.example.barber_server.repositories.ProvinceRepository;
 import com.example.barber_server.repositories.ShopRepository;
 import com.example.barber_server.repositories.WardRepository;
 import com.example.barber_server.services.ShopService;
+import com.example.barber_server.services.UploadImageService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,7 +15,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +29,7 @@ public class ShopServiceImpl implements ShopService {
     private final ShopRepository shopRepository;
     private final ProvinceRepository provinceRepository;
     private final WardRepository wardRepository;
+    private final UploadImageService uploadImageService;
 
     private void validateLocation(String provinceCode, String wardCode) {
         if (!provinceRepository.existsById(provinceCode)) {
@@ -43,30 +48,46 @@ public class ShopServiceImpl implements ShopService {
 
     @Override
     @Transactional
-    public Shop createShop(ShopRequest shopRequest) {
+    public ShopResponse createShop(ShopRequest shopRequest, MultipartFile imageFile, MultipartFile backgroundFile) {
+        String avatarUrl = null;
+        String backgroundUrl = null;
+
+        try {
+            if (imageFile != null && !imageFile.isEmpty()) {
+                avatarUrl = uploadImageService.uploadImage(imageFile);
+            }
+            if (backgroundFile != null && !backgroundFile.isEmpty()) {
+                backgroundUrl = uploadImageService.uploadImage(backgroundFile);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi khi upload ảnh: " + e.getMessage());
+        }
 
         validateCoordinates(shopRequest.getLatitude(), shopRequest.getLongitude());
-
-        String pCode = shopRequest.getProvinceCode();
-        String wCode = shopRequest.getWardCode();
-        this.validateLocation(pCode, wCode);
+        this.validateLocation(shopRequest.getProvinceCode(), shopRequest.getWardCode());
 
         Shop shopEntity = new Shop();
         shopEntity.setName(shopRequest.getName());
         shopEntity.setAddress(shopRequest.getAddress());
         shopEntity.setLatitude(shopRequest.getLatitude());
         shopEntity.setLongitude(shopRequest.getLongitude());
-        shopEntity.setAvatar(shopRequest.getAvatar());
-        shopEntity.setProvinceCode(provinceRepository.getReferenceById(pCode));
-        shopEntity.setWardCode(wardRepository.getReferenceById(wCode));
+        shopEntity.setAvatar(avatarUrl);
+        shopEntity.setBackground(backgroundUrl);
+        shopEntity.setProvinceCode(provinceRepository.getReferenceById(shopRequest.getProvinceCode()));
+        shopEntity.setWardCode(wardRepository.getReferenceById(shopRequest.getWardCode()));
 
+        shopRepository.save(shopEntity);
 
-        try {
-            return shopRepository.save(shopEntity);
-        } catch (Exception e) {
-            throw new RuntimeException("Lỗi hệ thống khi tạo cửa hàng: " + e.getMessage());
-        }
+        return ShopResponse.builder()
+                .id(shopEntity.getId())
+                .name(shopEntity.getName())
+                .address(shopEntity.getAddress())
+                .avatar(shopEntity.getAvatar())
+                .background(shopEntity.getBackground())
+                .build();
     }
+
+
     @Override
     public Shop updateShop(Integer id, Shop shopDetails) {
         return null;
@@ -74,8 +95,9 @@ public class ShopServiceImpl implements ShopService {
 
 
     @Override
-    public Page<Shop> filterShops(Map<String, String> params, Pageable pageable) {
-        // 1. Trích xuất và validate dữ liệu từ params
+    public Page<ShopResponse> filterShops(Map<String, String> params, Pageable pageable) {
+
+        Page<Shop> shopPage;
         String name = params.get("name");
         String provinceCode = params.get("provinceCode");
         String wardCode = params.get("wardCode");
@@ -89,20 +111,28 @@ public class ShopServiceImpl implements ShopService {
         }
 
         if (provinceCode != null && name == null && unitId == null && wardCode == null) {
-            return shopRepository.findAllByProvinceCode_Code(provinceCode, pageable);
+            shopPage = shopRepository.findAllByProvinceCode_Code(provinceCode, pageable);
+        } else if (wardCode != null && name == null && provinceCode == null && unitId == null) {
+            shopPage = shopRepository.findAllByWardCode_Code(wardCode, pageable);
+        } else if (unitId != null && name == null && provinceCode == null && wardCode == null) {
+            shopPage = shopRepository.findAllByProvinceCode_AdministrativeUnit_Id(unitId, pageable);
+        } else {
+            shopPage = shopRepository.findAll(createSpecification(name, provinceCode, unitId, wardCode), pageable);
         }
 
-        if (wardCode != null && name == null && provinceCode == null && unitId == null) {
-            return shopRepository.findAllByWardCode_Code(wardCode, pageable);
-        }
 
-        if (unitId != null && name == null && provinceCode == null && wardCode == null) {
-            return shopRepository.findAllByProvinceCode_AdministrativeUnit_Id(unitId, pageable);
-        }
-
-        return shopRepository.findAll(createSpecification(name, provinceCode, unitId, wardCode), pageable);
+        return shopPage.map(this::convertToResponse);
     }
 
+    private ShopResponse convertToResponse(Shop shop) {
+        return ShopResponse.builder()
+                .id(shop.getId())
+                .name(shop.getName())
+                .address(shop.getAddress())
+                .avatar(shop.getAvatar())
+                .background(shop.getBackground())
+                .build();
+    }
     private Specification<Shop> createSpecification(String name, String provinceCode, Integer unitId, String wardCode) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();

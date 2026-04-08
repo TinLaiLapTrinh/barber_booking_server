@@ -3,15 +3,10 @@ package com.example.barber_server.controllers;
 
 import com.example.barber_server.dto.dto_request.ShopRequest;
 import com.example.barber_server.dto.dto_request.VoucherRequest;
-import com.example.barber_server.dto.dto_response.MessageResponse;
-import com.example.barber_server.dto.dto_response.ShopServiceDetailResponse;
-import com.example.barber_server.dto.dto_response.ShopServiceResponse;
-import com.example.barber_server.dto.dto_response.VoucherResponse;
+import com.example.barber_server.dto.dto_response.*;
 import com.example.barber_server.models.Shop;
-import com.example.barber_server.services.ShopService;
-import com.example.barber_server.services.ShopServiceService;
-import com.example.barber_server.services.UploadImageService;
-import com.example.barber_server.services.VoucherService;
+import com.example.barber_server.models.User;
+import com.example.barber_server.services.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -35,34 +30,26 @@ public class ShopController {
     private final ShopServiceService shopServiceService;
     private final UploadImageService uploadService;
     private final VoucherService voucherService;
+    private final ShopBarberService shopBarberService;
 
     @Operation(summary = "Đăng ký tiệm cắt tóc", description = "Đăng ký tiệm cắt tóc")
     @PostMapping(value = "/shop", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Shop> createShop(
+    public ResponseEntity<ShopResponse> createShop(
             @ModelAttribute ShopRequest shopRequest,
-            @RequestParam(value = "image", required = false) MultipartFile file) throws IOException {
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestParam(value = "background_img", required = false) MultipartFile background_img) throws IOException {
 
-
-        if (file != null && !file.isEmpty()) {
-            String imageUrl = uploadService.uploadImage(file);
-            System.out.println("--- DEBUG UPLOAD ---");
-            System.out.println("Link ảnh từ Cloudinary: " + imageUrl);
-            shopRequest.setAvatar(imageUrl);
-        } else {
-            System.out.println("--- DEBUG UPLOAD ---");
-            System.out.println("Không nhận được file hoặc file trống!");
-        }
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(shopService.createShop(shopRequest));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(shopService.createShop(shopRequest, image, background_img));
     }
 
     @Operation(summary = "Danh sách cửa hàng", description = "Lấy danh sách shop có phân trang và lọc động")
     @GetMapping(value = "")
-    public ResponseEntity<Page<Shop>> getShops(
+    public ResponseEntity<Page<ShopResponse>> getShops(
             @RequestParam Map<String, String> params,
             @org.springframework.data.web.PageableDefault(size = 10, page = 0) org.springframework.data.domain.Pageable pageable
     ) {
-        Page<Shop> filteredShops = shopService.filterShops(params, pageable);
+        Page<ShopResponse> filteredShops = shopService.filterShops(params, pageable);
 
         return ResponseEntity.ok(filteredShops);
     }
@@ -111,6 +98,25 @@ public class ShopController {
             @ModelAttribute VoucherRequest voucherRequest
     ){
         return ResponseEntity.status(HttpStatus.CREATED).body(voucherService.createVoucher(voucherRequest, shopId));
+    }
+
+    @GetMapping("/{shopId}/barbers")
+    public ResponseEntity<List<UserResponse>> getBarbersByShop(@PathVariable Integer shopId) {
+        List<User> barbers = shopBarberService.getBarbersByShopId(shopId);
+
+        // Map từ User sang UserResponse
+        List<UserResponse> response = barbers.stream()
+                .map(u -> UserResponse.builder()
+                        .id(u.getId())
+                        .firstName(u.getFirstName())
+                        .lastName(u.getLastName())
+                        .email(u.getEmail())
+                        .phoneNumber(u.getPhoneNumber())
+                        .avatar(u.getAvatar())
+                        .build())
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 
 

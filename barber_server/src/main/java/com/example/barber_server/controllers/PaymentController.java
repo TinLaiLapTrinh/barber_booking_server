@@ -32,7 +32,7 @@ public class PaymentController {
             @PathVariable Integer orderId) {
 
         Order order = orderRepository.findById(orderId).orElse(null);
-        Float finalPrice = orderService.getfinalPrice(order);
+        Float finalPrice = orderService.getFinalPrice(order);
         log.info("Yêu cầu tạo link MoMo cho đơn hàng: #{} với số tiền: {}", orderId, finalPrice);
         Long amount = Long.parseLong(finalPrice.toString());
         MomoResponse response = paymentService.initiateMomoPayment(orderId,amount);
@@ -53,7 +53,7 @@ public class PaymentController {
             @PathVariable Integer orderId,
             HttpServletRequest request) {
         Order order = orderRepository.findById(orderId).orElse(null);
-        Float finalPrice = orderService.getfinalPrice(order);
+        Float finalPrice = orderService.getFinalPrice(order);
         long amount = Math.round(finalPrice);
 
         log.info("Yêu cầu tạo link VNPay cho đơn hàng: #{} với số tiền: {}", orderId, amount);

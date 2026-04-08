@@ -239,7 +239,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Float getfinalPrice(Order order) {
+    public Float getFinalPrice(Order order) {
 
         if (order.getVoucher() == null) {
             return order.getTotalPrice();
