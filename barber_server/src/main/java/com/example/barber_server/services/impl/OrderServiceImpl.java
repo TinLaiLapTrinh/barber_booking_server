@@ -2,10 +2,8 @@ package com.example.barber_server.services.impl;
 
 import com.example.barber_server.dto.dto_request.OrderDetailRequest;
 import com.example.barber_server.dto.dto_request.OrderRequest;
-import com.example.barber_server.dto.dto_response.ImageResponse;
-import com.example.barber_server.dto.dto_response.MessageResponse;
-import com.example.barber_server.dto.dto_response.OrderDetailResponse;
-import com.example.barber_server.dto.dto_response.OrderResponse;
+import com.example.barber_server.dto.dto_request.RateRequest;
+import com.example.barber_server.dto.dto_response.*;
 import com.example.barber_server.exception.BusinessException;
 import com.example.barber_server.exception.ResourceNotFoundException;
 import com.example.barber_server.models.*;
@@ -16,7 +14,10 @@ import com.example.barber_server.repositories.*;
 import com.example.barber_server.services.OrderService;
 import com.example.barber_server.services.VoucherService;
 import com.example.barber_server.utils.SecurityUtils;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +39,7 @@ public class OrderServiceImpl implements OrderService {
     private final ShopServiceDetailRepository shopServiceDetailRepository;
     private final VoucherService  voucherService;
     private final VoucherRepository voucherRepository;
+    private final RateRepository rateRepository;
 
 
     @Override
@@ -266,6 +268,58 @@ public class OrderServiceImpl implements OrderService {
 
         float finalPrice = originalPrice - discountAmount;
         return Math.max(finalPrice, 0);
+    }
+
+    @Override
+    public Page<ListOrderResponse> orderHistory(Integer customerId, Pageable pageable) {
+        Page<Order> orders = orderRepository.findAllByCustomerId(customerId, pageable);
+
+        return orders.map(order -> ListOrderResponse.builder()
+                .id(order.getId())
+                .shopName(order.getShop().getName())
+                .shopAddress(order.getShop().getAddress())
+                .shopAvatar(order.getShop().getAvatar())
+                .orderDate(order.getOrderDate())
+                .startTime(order.getStartTime())
+                .barberId(order.getBarber().getId())
+                .barberName(order.getBarber().getFirstName()+ " "+ order.getBarber().getLastName())
+                .status(order.getStatus().name())
+                .statusName(order.getStatus().getDisplayValue())
+                .finalPrice(order.getFinalPrice())
+                .serviceSummary(order.getOrderDetails().stream()
+                        .map(detail -> detail.getShopServiceDetail().getServiceDetail().getServiceType())
+                        .collect(Collectors.joining(", ")))
+                .build());
+    }
+
+    @Override
+    @Transactional
+    public MessageResponse rating(Integer orderId, User customer, RateRequest rateRequest) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new BusinessException("Không tìm thấy đơn hàng ID: " + orderId));
+
+        if (!order.getCustomer().getId().equals(customer.getId())) {
+            return new MessageResponse("Bạn không có quyền đánh giá đơn hàng số: " , orderId);
+        }
+
+        if (order.getStatus() != OrderStatus.COMPLETED) {
+            return new MessageResponse("Chỉ có thể đánh giá đơn hàng sau khi đã hoàn thành!", orderId);
+        }
+
+        if (!order.getRates().isEmpty()) {
+            return new MessageResponse("Đơn hàng này đã được đánh giá trước đó.", orderId);
+        }
+
+        Rate rate = new Rate();
+        rate.setRating(rateRequest.getRating());
+        rate.setContent(rateRequest.getContent());
+        rate.setOrder(order);
+        rate.setCustomer(customer);
+
+        rateRepository.save(rate);
+
+        return new MessageResponse("Đánh giá đơn hàng thành công! Cảm ơn bạn.", orderId);
     }
 
 }

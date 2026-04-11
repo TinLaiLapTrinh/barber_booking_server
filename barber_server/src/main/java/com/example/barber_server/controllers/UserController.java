@@ -4,6 +4,7 @@ package com.example.barber_server.controllers;
 import com.example.barber_server.auth.JwtService;
 import com.example.barber_server.dto.AuthResponse;
 import com.example.barber_server.dto.LoginRequest;
+import com.example.barber_server.dto.dto_response.RateResponse;
 import com.example.barber_server.dto.dto_response.UserPrincipal;
 import com.example.barber_server.models.User;
 import com.example.barber_server.services.UploadImageService;
@@ -11,6 +12,7 @@ import com.example.barber_server.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -142,6 +144,17 @@ public class UserController
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(userService.getCustomer(params,page, size));
+    }
+
+    @Operation(summary = "Danh sách đánh giá của barber", description = "Lấy danh sách đánh giá theo ID của thợ cắt tóc (Có phân trang)")
+    @GetMapping("/barber/{id}/rates")
+    public ResponseEntity<Page<RateResponse>> getRateByBarberId(
+            @PathVariable Integer id,
+            Pageable pageable
+    ) {
+
+        Page<RateResponse> rateResponsePage = userService.getRateByBarberId(id, pageable);
+        return ResponseEntity.ok(rateResponsePage);
     }
 
 

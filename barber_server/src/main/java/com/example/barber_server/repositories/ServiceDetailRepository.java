@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import java.util.List;
 
 public interface ServiceDetailRepository extends JpaRepository<ServiceDetail,Integer>, JpaSpecificationExecutor<ServiceDetail> {
+    List<ServiceDetail> findServiceDetailByService_Id_AndCategory_Id(Integer serviceId, Integer categoryId);
+
     List<ServiceDetail> findServiceDetailByService_Id(Integer serviceId);
 
     List<ServiceDetail> findServiceDetailByCategory_Id(Integer categoryId);

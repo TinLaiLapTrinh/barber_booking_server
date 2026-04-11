@@ -15,5 +15,7 @@ public class ShopResponse {
     private String address;
     private String avatar;
     private String background;
+    private Double rateAvg;
+    private Long bookingCount;
 
 }

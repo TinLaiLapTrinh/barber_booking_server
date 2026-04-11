@@ -2,6 +2,8 @@ package com.example.barber_server.repositories;
 
 import com.example.barber_server.models.Order;
 import feign.Param;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -25,6 +27,14 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
 
     List<Order> findByCustomerIdAndOrderDateOrderByStartTimeAsc(Integer customerId, LocalDate orderDate);
 
+    Page<Order> findAllByCustomerId(Integer customerId, Pageable pageable);
+
     Order findFirstById(Integer id);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.shop.id = :shopId")
+    Long countTotalOrdersByShopId(@Param("shopId") Integer shopId);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.barber.id = :barberId")
+    Long countTotalOrdersByBarberId(@Param("barberId") Integer barberId);
 
 }

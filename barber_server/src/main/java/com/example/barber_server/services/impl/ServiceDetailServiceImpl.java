@@ -1,6 +1,7 @@
 package com.example.barber_server.services.impl;
 
 import com.example.barber_server.dto.dto_response.ImageResponse;
+import com.example.barber_server.dto.dto_response.ServiceDetailResponse;
 import com.example.barber_server.exception.ResourceNotFoundException;
 import com.example.barber_server.models.ServiceCategory;
 import com.example.barber_server.models.ServiceDetail;
@@ -30,8 +31,29 @@ public class ServiceDetailServiceImpl implements ServiceDetailService {
     private final ServiceCategoryRepository serviceCategoryRepository;
 
     @Override
-    public List<ServiceDetail> findAllByServiceId(Integer serviceId) {
-        return serviceDetailRepository.findServiceDetailByService_Id(serviceId);
+    public List<ServiceDetailResponse> findAllByServiceIdAndCategoryId(Integer serviceId, Integer categoryId) {
+        List<ServiceDetail> entities = serviceDetailRepository.findServiceDetailByService_Id_AndCategory_Id(serviceId, categoryId);
+
+        return entities.stream().map(serviceDetail -> {
+            ServiceDetailResponse response = new ServiceDetailResponse();
+
+            response.setId(serviceDetail.getId());
+
+            response.setName(serviceDetail.getServiceType());
+            response.setPrice(serviceDetail.getBasePrice());
+            response.setDescription(serviceDetail.getDescription());
+
+            if (serviceDetail.getCategory() != null) {
+                response.setCategoryName(serviceDetail.getCategory().getName());
+            }
+
+            List<String> images = serviceDetail.getServiceDetailImages().stream()
+                    .map(ServiceDetailImage::getImage)
+                    .toList();
+            response.setImageUrls(images);
+
+            return response;
+        }).toList();
     }
 
     @Override

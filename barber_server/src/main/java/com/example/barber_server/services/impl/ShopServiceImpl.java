@@ -1,22 +1,30 @@
 package com.example.barber_server.services.impl;
 
+import com.example.barber_server.dto.dto_request.RateRequest;
 import com.example.barber_server.dto.dto_request.ShopRequest;
-import com.example.barber_server.dto.dto_response.ShopResponse;
+import com.example.barber_server.dto.dto_response.*;
+import com.example.barber_server.exception.BusinessException;
+import com.example.barber_server.exception.GlobalExceptionHandler;
+import com.example.barber_server.exception.ResourceNotFoundException;
+import com.example.barber_server.models.Rate;
 import com.example.barber_server.models.Shop;
-import com.example.barber_server.repositories.ProvinceRepository;
-import com.example.barber_server.repositories.ShopRepository;
-import com.example.barber_server.repositories.WardRepository;
+import com.example.barber_server.models.ShopServiceDetail;
+import com.example.barber_server.repositories.*;
 import com.example.barber_server.services.ShopService;
 import com.example.barber_server.services.UploadImageService;
 import jakarta.persistence.criteria.Predicate;
+import jdk.jfr.Category;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +38,10 @@ public class ShopServiceImpl implements ShopService {
     private final ProvinceRepository provinceRepository;
     private final WardRepository wardRepository;
     private final UploadImageService uploadImageService;
+    private final RateRepository rateRepository;
+    private final OrderRepository orderRepository;
+    private final ShopServiceRepository shopServiceRepository;
+    private final ShopServiceDetailRepository shopServiceDetailRepository;
 
     private void validateLocation(String provinceCode, String wardCode) {
         if (!provinceRepository.existsById(provinceCode)) {
@@ -83,6 +95,7 @@ public class ShopServiceImpl implements ShopService {
                 .name(shopEntity.getName())
                 .address(shopEntity.getAddress())
                 .avatar(shopEntity.getAvatar())
+                .rateAvg(rateRepository.calculateAverageRatingForShop(shopEntity.getId()))
                 .background(shopEntity.getBackground())
                 .build();
     }
@@ -92,6 +105,7 @@ public class ShopServiceImpl implements ShopService {
     public Shop updateShop(Integer id, Shop shopDetails) {
         return null;
     }
+
 
 
     @Override
@@ -131,28 +145,27 @@ public class ShopServiceImpl implements ShopService {
                 .address(shop.getAddress())
                 .avatar(shop.getAvatar())
                 .background(shop.getBackground())
+                .rateAvg(rateRepository.calculateAverageRatingForShop(shop.getId()))
+                .bookingCount(orderRepository.countTotalOrdersByShopId(shop.getId()))
                 .build();
     }
+
     private Specification<Shop> createSpecification(String name, String provinceCode, Integer unitId, String wardCode) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // Lọc theo tên (không phân biệt hoa thường)
             if (name != null && !name.trim().isEmpty()) {
                 predicates.add(cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
             }
 
-            // Lọc theo mã tỉnh/thành
             if (provinceCode != null && !provinceCode.trim().isEmpty()) {
                 predicates.add(cb.equal(root.get("provinceCode").get("code"), provinceCode));
             }
 
-            // Lọc theo mã đơn vị hành chính (unitId)
             if (unitId != null) {
                 predicates.add(cb.equal(root.get("provinceCode").get("administrativeUnit").get("id"), unitId));
             }
 
-            // Lọc theo mã phường/xã
             if (wardCode != null && !wardCode.trim().isEmpty()) {
                 predicates.add(cb.equal(root.get("wardCode").get("code"), wardCode));
             }
@@ -161,6 +174,70 @@ public class ShopServiceImpl implements ShopService {
         };
     }
 
+    @Override
+    public Page<RateResponse> getRateByShopId(Integer shopId, Pageable pageable) {
+        Page<Rate> rates = rateRepository.findAllByOrder_Shop_Id(shopId, pageable);
+
+
+        return rates.map(rate -> RateResponse.builder()
+                .id(rate.getId())
+                .rating(rate.getRating())
+                .content(rate.getContent())
+                .avatar(rate.getCustomer().getAvatar())
+                .fullname(rate.getCustomer() != null ? rate.getCustomer().getFirstName() + " " +rate.getCustomer().getLastName() : "Người dùng ẩn danh")
+                .ordertype(rate.getOrder() != null ? rate.getOrder().getStatus().name() : "N/A")
+                .build());
+    }
+
+    @Override
+    public ShopDetailResponse getShopDetail(Integer shopId, Integer categoryId) {
+
+        // 1. Tìm Shop
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> new ResourceNotFoundException("Shop không tồn tại"));
+        List<ShopServiceResponse> shopServiceResponses = shopServiceRepository.findByShop_Id(shopId)
+                .stream()
+                .map(ss -> ShopServiceResponse.builder()
+                        .id(ss.getId())
+                        .shopId(ss.getShop() != null ? ss.getShop().getId() : null)
+                        .serviceId(ss.getService() != null ? ss.getService().getId() : null)
+                        .serviceName(ss.getService() != null ? ss.getService().getName() : "N/A")
+                        .serviceDescription(ss.getService() != null ? ss.getService().getDescription() : "")
+                        .build())
+                .toList();
+
+        Double avgRate = rateRepository.calculateAverageRatingForShop(shopId);
+        Long bookingCount = orderRepository.countTotalOrdersByShopId(shopId);
+
+        return ShopDetailResponse.builder()
+                .id(shop.getId())
+                .name(shop.getName())
+                .address(shop.getAddress())
+                .avatar(shop.getAvatar())
+                .latitude(shop.getLatitude())
+                .longitude(shop.getLongitude())
+                .background(shop.getBackground())
+
+                // Map Province (Null-safe)
+                .province(shop.getProvinceCode() != null ?
+                        new ShopDetailResponse.LocationInfo(
+                                shop.getProvinceCode().getCode(),
+                                shop.getProvinceCode().getName()
+                        ) : null)
+
+                // Map Ward (Null-safe)
+                .ward(shop.getWardCode() != null ?
+                        new ShopDetailResponse.LocationInfo(
+                                shop.getWardCode().getCode(),
+                                shop.getWardCode().getName()
+                        ) : null)
+
+                // Map Danh sách Tabs và Thống kê
+                .shopServiceResponses(shopServiceResponses)
+                .rateAvg(avgRate != null ? avgRate : 0.0)
+                .bookingCount(bookingCount != null ? bookingCount : 0L)
+                .build();
+    }
 
 
 }

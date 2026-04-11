@@ -2,12 +2,12 @@ package com.example.barber_server.controllers;
 
 
 import com.example.barber_server.dto.dto_request.OrderRequest;
-import com.example.barber_server.dto.dto_response.MessageResponse;
-import com.example.barber_server.dto.dto_response.OrderResponse;
-import com.example.barber_server.dto.dto_response.UserPrincipal;
+import com.example.barber_server.dto.dto_request.RateRequest;
+import com.example.barber_server.dto.dto_response.*;
 import com.example.barber_server.exception.ResourceNotFoundException;
 import com.example.barber_server.models.Order;
 import com.example.barber_server.models.Service;
+import com.example.barber_server.models.User;
 import com.example.barber_server.repositories.OrderRepository;
 import com.example.barber_server.repositories.UserRepository;
 import com.example.barber_server.services.OrderService;
@@ -15,6 +15,11 @@ import com.example.barber_server.utils.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -148,6 +153,47 @@ public class OrderController {
         String reason = (body != null) ? body.get("reason") : "Không có lý do";
         return ResponseEntity.ok(orderService.cancelOrder(id));
     }
+
+    @Operation(summary = "Lịch sử đặt hàng phân trang")
+    @GetMapping(value = "/history-order")
+    public ResponseEntity<?> historyOrder(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @ParameterObject Pageable pageable) {
+
+        if (!SecurityUtils.isCustomer()) {
+            ErrorResponse error = ErrorResponse.builder()
+                    .status(HttpStatus.FORBIDDEN.value())
+                    .message("Yêu cầu không hợp lệ. Chỉ khách hàng mới có quyền này.")
+                    .timestamp(System.currentTimeMillis())
+                    .build();
+
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+        }
+
+        Pageable finalPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.DESC, "orderDate", "startTime")
+        );
+
+        Page<ListOrderResponse> historyPage = orderService.orderHistory(principal.getId(), finalPageable);
+
+        return ResponseEntity.ok(historyPage);
+    }
+
+    @Operation(summary = "Đánh giá dịch vụ")
+    @PostMapping(value = "/order/{id}/rating")
+    public ResponseEntity<MessageResponse> rating(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestBody RateRequest request
+    ){
+        User customer = userRepository.findUserById(principal.getId());
+
+        MessageResponse response = orderService.rating(id, customer, request);
+        return ResponseEntity.ok(response);
+    }
+
 
 
 }

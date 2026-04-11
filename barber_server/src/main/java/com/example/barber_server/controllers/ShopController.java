@@ -4,13 +4,14 @@ package com.example.barber_server.controllers;
 import com.example.barber_server.dto.dto_request.ShopRequest;
 import com.example.barber_server.dto.dto_request.VoucherRequest;
 import com.example.barber_server.dto.dto_response.*;
-import com.example.barber_server.models.Shop;
-import com.example.barber_server.models.User;
+import com.example.barber_server.repositories.RateRepository;
 import com.example.barber_server.services.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,7 @@ public class ShopController {
     private final UploadImageService uploadService;
     private final VoucherService voucherService;
     private final ShopBarberService shopBarberService;
+    private final RateRepository rateRepository;
 
     @Operation(summary = "Đăng ký tiệm cắt tóc", description = "Đăng ký tiệm cắt tóc")
     @PostMapping(value = "/shop", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -54,6 +56,17 @@ public class ShopController {
         return ResponseEntity.ok(filteredShops);
     }
 
+    @Operation(summary = "Chi tiết cửa hàng")
+    @GetMapping(value = "/shop/{id}")
+    public ResponseEntity<ShopDetailResponse> getShopDetail(
+            @PathVariable Integer id
+    ) {
+        ShopDetailResponse shopDetail = shopService.getShopDetail(id, id);
+
+        return ResponseEntity.ok(shopDetail);
+    }
+
+
 
     @Operation(summary = "Gán dịch vụ cho shop", description = "Tạo liên kết giữa một cửa hàng và một dịch vụ hệ thống")
     @PostMapping("/shop/{shopId}/service")
@@ -76,10 +89,11 @@ public class ShopController {
             @PathVariable Integer shopId,
             @PathVariable Integer serviceId,
             @RequestParam Integer categoryId,
-            @org.springframework.data.web.PageableDefault(size = 10, page = 0) org.springframework.data.domain.Pageable pageable
+            @org.springframework.data.web.PageableDefault(size = 5, page = 0) org.springframework.data.domain.Pageable pageable
     ){
         return ResponseEntity.status(HttpStatus.OK).body(shopServiceService.findShopServiceDetailByCategoryId(serviceId,categoryId,pageable));
     }
+
 
     @Operation(summary = "Danh sách phiếu giảm giá của shop", description = "Danh sách phiếu giảm giá")
     @GetMapping("/shop/{shopId}/vouchers/conditions")
@@ -100,24 +114,27 @@ public class ShopController {
         return ResponseEntity.status(HttpStatus.CREATED).body(voucherService.createVoucher(voucherRequest, shopId));
     }
 
+    @Operation(summary = "Lấy danh sách thợ của quán")
     @GetMapping("/{shopId}/barbers")
     public ResponseEntity<List<UserResponse>> getBarbersByShop(@PathVariable Integer shopId) {
-        List<User> barbers = shopBarberService.getBarbersByShopId(shopId);
+        List<UserResponse> barbers = shopBarberService.getBarbersByShopId(shopId);
 
-        // Map từ User sang UserResponse
-        List<UserResponse> response = barbers.stream()
-                .map(u -> UserResponse.builder()
-                        .id(u.getId())
-                        .firstName(u.getFirstName())
-                        .lastName(u.getLastName())
-                        .email(u.getEmail())
-                        .phoneNumber(u.getPhoneNumber())
-                        .avatar(u.getAvatar())
-                        .build())
-                .toList();
 
-        return ResponseEntity.ok(response);
+
+        return ResponseEntity.ok(barbers);
     }
+
+    @Operation(summary = "Lấy danh đánh giá của quán")
+    @GetMapping("/shop/{shopId}/rates")
+    public ResponseEntity<Page<RateResponse>> getRateByShop(
+            @PathVariable Integer shopId,
+            @ParameterObject Pageable pageable
+    ){
+
+        return ResponseEntity.ok(shopService.getRateByShopId(shopId,pageable));
+    }
+
+
 
 
 

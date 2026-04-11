@@ -14,5 +14,6 @@ public interface ShopServiceRepository extends JpaRepository<ShopService,Integer
 
     List<ShopService> findByShop_Id(Integer shopId);
 
+    
 
 }

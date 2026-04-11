@@ -1,6 +1,7 @@
 package com.example.barber_server.controllers;
 
 import com.example.barber_server.dto.dto_response.ImageResponse;
+import com.example.barber_server.dto.dto_response.ServiceDetailResponse;
 import com.example.barber_server.models.Service;
 import com.example.barber_server.models.ServiceDetail;
 import com.example.barber_server.models.ServiceDetailImage;
@@ -33,7 +34,7 @@ public class ServiceController {
     }
 
     @Operation(summary = "Danh sách dịch vụ")
-    @GetMapping("/services")
+    @GetMapping("")
     public ResponseEntity<List<Service>> getServices() {
         return ResponseEntity.ok(serviceService.findAllService());
     }
@@ -63,8 +64,12 @@ public class ServiceController {
 
     @Operation(summary = "Danh sách chi tiết theo nhóm")
     @GetMapping("/service/{serviceId}/details")
-    public ResponseEntity<List<ServiceDetail>> getDetailsByService(@PathVariable Integer serviceId) {
-        return ResponseEntity.ok(serviceDetailService.findAllByServiceId(serviceId));
+    public ResponseEntity<List<ServiceDetailResponse>> getDetailsByService(
+            @PathVariable Integer serviceId,
+            @RequestParam("categoryId") Integer categoryId
+    ) {
+        return ResponseEntity.ok(serviceDetailService.findAllByServiceIdAndCategoryId(serviceId, categoryId));
     }
+
 
 }

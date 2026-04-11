@@ -1,9 +1,14 @@
 package com.example.barber_server.services;
 
 import com.example.barber_server.dto.dto_request.OrderRequest;
+import com.example.barber_server.dto.dto_request.RateRequest;
+import com.example.barber_server.dto.dto_response.ListOrderResponse;
 import com.example.barber_server.dto.dto_response.MessageResponse;
 import com.example.barber_server.dto.dto_response.OrderResponse;
 import com.example.barber_server.models.Order;
+import com.example.barber_server.models.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -26,4 +31,8 @@ public interface OrderService {
     MessageResponse cancelOrder(Integer orderId);
 
     Float getFinalPrice(Order order);
+
+    Page<ListOrderResponse> orderHistory(Integer customerId, Pageable pageable);
+
+    MessageResponse rating(Integer orderId, User customer, RateRequest rateRequest);
 }

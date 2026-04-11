@@ -2,11 +2,17 @@ package com.example.barber_server.services.impl;
 
 
 import com.example.barber_server.auth.JwtService;
+import com.example.barber_server.dto.dto_response.RateResponse;
+import com.example.barber_server.exception.BusinessException;
+import com.example.barber_server.models.Rate;
 import com.example.barber_server.models.User;
+import com.example.barber_server.repositories.RateRepository;
 import com.example.barber_server.repositories.UserRepository;
 import com.example.barber_server.services.UserService;
 import jakarta.persistence.criteria.Predicate;
 
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,19 +23,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@AllArgsConstructor
 @Service
 public class UserServiceImpl implements UserService {
 
     public final UserRepository userRepository;
     public final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final RateRepository rateRepository;
 
-
-    public UserServiceImpl(UserRepository userRepository, JwtService jwtService,PasswordEncoder passwordEncoder ) {
-        this.userRepository = userRepository;
-        this.jwtService = jwtService;
-        this.passwordEncoder = passwordEncoder;
-    }
 
     @Override
     public Boolean authenticate(String username, String password) {
@@ -101,5 +103,31 @@ public class UserServiceImpl implements UserService {
 
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + id));
+    }
+
+    @Override
+    public Page<RateResponse> getRateByBarberId(Integer barberId, Pageable pageable) {
+
+        User user = userRepository.findById(barberId).orElse(null);
+
+        if (user == null || !"BARBER".equals(user.getUserType())) {
+            throw new BusinessException("ID cung cấp không tồn tại hoặc không phải là Barber");
+
+        }
+
+        Page<Rate> rates = rateRepository.findAllByOrder_Barber_Id(barberId, pageable);
+
+        return rates.map(rate -> RateResponse.builder()
+                .id(rate.getId())
+                .rating(rate.getRating())
+                .content(rate.getContent())
+                .avatar(rate.getCustomer() != null ? rate.getCustomer().getAvatar() : null)
+                .fullname(rate.getCustomer() != null
+                        ? rate.getCustomer().getFirstName() + " " + rate.getCustomer().getLastName()
+                        : "Người dùng ẩn danh")
+                .ordertype(rate.getOrder() != null
+                        ? rate.getOrder().getStatus().name()
+                        : "N/A")
+                .build());
     }
 }

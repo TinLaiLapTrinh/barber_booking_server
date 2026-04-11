@@ -1,6 +1,7 @@
 package com.example.barber_server.repositories;
 
 
+import com.example.barber_server.dto.dto_response.ShopResponse;
 import com.example.barber_server.models.Service;
 import com.example.barber_server.models.Shop;
 import org.springframework.data.domain.Page;
@@ -22,5 +23,7 @@ public interface ShopRepository extends JpaRepository<Shop, Integer>, JpaSpecifi
 
     Page<Shop> findAllByProvinceCode_FullNameContainingIgnoreCase(String fullName, Pageable pageable);
 
+    Shop getShopsById(Integer id);
 
+    Boolean existsShopById(Integer id);
 }

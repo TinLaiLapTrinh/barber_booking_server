@@ -16,4 +16,6 @@ public class UserResponse {
     private String email;
     private String phoneNumber;
     private String avatar;
+    private Double rateAvg;
+    private Long bookingCount;
 }
