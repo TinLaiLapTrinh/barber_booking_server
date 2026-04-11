@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -29,8 +30,8 @@ public class ShopBarber {
     private User barber;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "joined_at")
-    private Instant joinedAt;
+    @Column(name = "joined_at", precision = 0, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
+    private LocalDateTime joinedAt;
 
     @ColumnDefault("1")
     @Column(name = "is_active")

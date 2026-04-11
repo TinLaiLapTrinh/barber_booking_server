@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -95,8 +96,8 @@ public class ShopServiceServiceImpl implements ShopServiceService {
             ssd.setServiceDetail(sysDetail);
             ssd.setPrice(sysDetail.getBasePrice());
             ssd.setIsActive(true);
-            ssd.setCreatedAt(Instant.now());
-            ssd.setUpdatedAt(Instant.now());
+            ssd.setCreatedAt(LocalDateTime.now());
+            ssd.setUpdatedAt(LocalDateTime.now());
             return ssd;
         }).toList();
 
