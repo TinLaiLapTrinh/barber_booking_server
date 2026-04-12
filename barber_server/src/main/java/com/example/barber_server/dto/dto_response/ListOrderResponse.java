@@ -31,4 +31,7 @@ public class ListOrderResponse {
     private Float finalPrice;
 
     private String serviceSummary;
+
+    private Integer TotalDuration;
+
 }

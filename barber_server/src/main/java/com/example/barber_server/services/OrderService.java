@@ -2,6 +2,7 @@ package com.example.barber_server.services;
 
 import com.example.barber_server.dto.dto_request.OrderRequest;
 import com.example.barber_server.dto.dto_request.RateRequest;
+import com.example.barber_server.dto.dto_response.BarberWeekScheduleResponse;
 import com.example.barber_server.dto.dto_response.ListOrderResponse;
 import com.example.barber_server.dto.dto_response.MessageResponse;
 import com.example.barber_server.dto.dto_response.OrderResponse;
@@ -35,4 +36,6 @@ public interface OrderService {
     Page<ListOrderResponse> orderHistory(Integer customerId, Pageable pageable);
 
     MessageResponse rating(Integer orderId, User customer, RateRequest rateRequest);
+
+    List<BarberWeekScheduleResponse> getBarberScheduleByWeek(Integer barberId, LocalDate date);
 }

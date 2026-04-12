@@ -116,8 +116,8 @@ public class ShopController {
 
     @Operation(summary = "Lấy danh sách thợ của quán")
     @GetMapping("/{shopId}/barbers")
-    public ResponseEntity<List<UserResponse>> getBarbersByShop(@PathVariable Integer shopId) {
-        List<UserResponse> barbers = shopBarberService.getBarbersByShopId(shopId);
+    public ResponseEntity<List<BarberResponse>> getBarbersByShop(@PathVariable Integer shopId) {
+        List<BarberResponse> barbers = shopBarberService.getBarbersByShopId(shopId);
 
 
 

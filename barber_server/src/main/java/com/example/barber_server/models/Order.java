@@ -80,6 +80,10 @@ public class Order {
     private PaymentMethod paymentMethod;
     @Column(name = "final_price")
     private Float finalPrice;
+    @NotNull
+    @ColumnDefault("0")
+    @Column(name = "total_duration", nullable = false)
+    private Integer totalDuration;
 
 
 }

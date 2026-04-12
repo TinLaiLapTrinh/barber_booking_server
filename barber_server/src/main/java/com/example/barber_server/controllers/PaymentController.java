@@ -34,7 +34,7 @@ public class PaymentController {
         Order order = orderRepository.findById(orderId).orElse(null);
         Float finalPrice = orderService.getFinalPrice(order);
         log.info("Yêu cầu tạo link MoMo cho đơn hàng: #{} với số tiền: {}", orderId, finalPrice);
-        Long amount = Long.parseLong(finalPrice.toString());
+        Long amount = Math.round(finalPrice.doubleValue());
         MomoResponse response = paymentService.initiateMomoPayment(orderId,amount);
         return ResponseEntity.ok(response);
     }

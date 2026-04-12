@@ -9,13 +9,13 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserResponse {
+public class BarberResponse {
     private Integer id;
     private String firstName;
     private String lastName;
     private String email;
     private String phoneNumber;
     private String avatar;
-//    private Double rateAvg;
-//    private Long bookingCount;
+    private Double rateAvg;
+    private Long bookingCount;
 }

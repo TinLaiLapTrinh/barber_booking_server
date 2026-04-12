@@ -1,8 +1,7 @@
 package com.example.barber_server.services.impl;
 
-import com.example.barber_server.dto.dto_response.UserResponse;
+import com.example.barber_server.dto.dto_response.BarberResponse;
 import com.example.barber_server.models.ShopBarber;
-import com.example.barber_server.models.User;
 import com.example.barber_server.repositories.OrderRepository;
 import com.example.barber_server.repositories.RateRepository;
 import com.example.barber_server.repositories.ShopBarberRepository;
@@ -11,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,11 +19,11 @@ public class ShopBarberServiceImpl implements ShopBarberService {
     private final OrderRepository orderRepository;
 
     @Override
-    public List<UserResponse> getBarbersByShopId(Integer shopId) {
+    public List<BarberResponse> getBarbersByShopId(Integer shopId) {
         List<ShopBarber> relations = shopBarberRepository.findByShop_Id(shopId);
 
         return relations.stream()
-                .map(u -> UserResponse.builder()
+                .map(u -> BarberResponse.builder()
                         .id(u.getBarber().getId())
                         .firstName(u.getBarber().getFirstName())
                         .lastName(u.getBarber().getLastName())

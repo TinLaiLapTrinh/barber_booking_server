@@ -20,8 +20,13 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
             "WHERE o.barber.id = :barberId " +
             "AND o.orderDate = :orderDate " +
             "AND o.status <> com.example.barber_server.models.enums.OrderStatus.CANCELLED " +
-            "AND (:startTime < o.endTime AND :endTime > o.startTime)")
-    boolean isBarberBusy(Integer barberId, LocalDate orderDate, LocalTime startTime, LocalTime endTime);
+            "AND (:startTime < o.endTime AND :calculatedEndTime > o.startTime)")
+    boolean isBarberBusy(
+            @Param("barberId") Integer barberId,
+            @Param("orderDate") LocalDate orderDate,
+            @Param("startTime") LocalTime startTime,
+            @Param("calculatedEndTime") LocalTime calculatedEndTime
+    );
 
     List<Order> findByBarberIdAndOrderDateOrderByStartTimeAsc(Integer barberId, LocalDate orderDate);
 
@@ -37,4 +42,9 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
     @Query("SELECT COUNT(o) FROM Order o WHERE o.barber.id = :barberId")
     Long countTotalOrdersByBarberId(@Param("barberId") Integer barberId);
 
+    List<Order> findByBarberIdAndOrderDateBetweenOrderByOrderDateAscStartTimeAsc(
+            Integer barberId,
+            LocalDate startDate,
+            LocalDate endDate
+    );
 }

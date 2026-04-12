@@ -35,5 +35,6 @@ public class OrderResponse {
     private String paymentMethodName;
     private Float totalPrice;
     private Float finalPrice;
+    private Integer TotalDuration;
 
 }

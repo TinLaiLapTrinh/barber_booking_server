@@ -51,6 +51,15 @@ public class ServiceController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedDetail);
     }
 
+    @Operation(summary = "Danh sách chi tiết theo nhóm")
+    @GetMapping("/service/{serviceId}/details")
+    public ResponseEntity<List<ServiceDetailResponse>> getDetailsByService(
+            @PathVariable Integer serviceId,
+            @RequestParam("categoryId") Integer categoryId
+    ) {
+        return ResponseEntity.ok(serviceDetailService.findAllByServiceIdAndCategoryId(serviceId, categoryId));
+    }
+
 
     @Operation(summary = "Upload list hình ảnh cho chi tiết dịch vụ")
     @PostMapping(value = "/detail/{detailId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -62,14 +71,7 @@ public class ServiceController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedImages);
     }
 
-    @Operation(summary = "Danh sách chi tiết theo nhóm")
-    @GetMapping("/service/{serviceId}/details")
-    public ResponseEntity<List<ServiceDetailResponse>> getDetailsByService(
-            @PathVariable Integer serviceId,
-            @RequestParam("categoryId") Integer categoryId
-    ) {
-        return ResponseEntity.ok(serviceDetailService.findAllByServiceIdAndCategoryId(serviceId, categoryId));
-    }
+
 
 
 }

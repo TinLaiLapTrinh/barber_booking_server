@@ -2,17 +2,18 @@ package com.example.barber_server.services.impl;
 
 
 import com.example.barber_server.auth.JwtService;
+import com.example.barber_server.dto.dto_response.BarberResponse;
 import com.example.barber_server.dto.dto_response.RateResponse;
 import com.example.barber_server.exception.BusinessException;
 import com.example.barber_server.models.Rate;
 import com.example.barber_server.models.User;
+import com.example.barber_server.repositories.OrderRepository;
 import com.example.barber_server.repositories.RateRepository;
 import com.example.barber_server.repositories.UserRepository;
 import com.example.barber_server.services.UserService;
 import jakarta.persistence.criteria.Predicate;
 
 import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +32,7 @@ public class UserServiceImpl implements UserService {
     public final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final RateRepository rateRepository;
+    private final OrderRepository orderRepository;
 
 
     @Override
@@ -78,8 +80,27 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public Page<User> getBarbers(Map<String, String> params,int page, int size) {
-        return null;
+    public Page<BarberResponse> getBarbers(Map<String, String> params, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<User> barbers = userRepository.findAllByUserType("BARBER", pageable);
+
+        return barbers.map(u -> {
+
+            Double avgRating = rateRepository.calculateAverageRatingForBarber(u.getId());
+            Long bookingCount = orderRepository.countTotalOrdersByBarberId(u.getId());
+
+            return BarberResponse.builder()
+                    .id(u.getId())
+                    .firstName(u.getFirstName())
+                    .lastName(u.getLastName())
+                    .email(u.getEmail())
+                    .phoneNumber(u.getPhoneNumber())
+                    .avatar(u.getAvatar())
+                    .rateAvg(avgRating != null ? avgRating : 0.0)
+                    .bookingCount(bookingCount != null ? bookingCount : 0L)
+                    .build();
+        });
     }
 
     @Override

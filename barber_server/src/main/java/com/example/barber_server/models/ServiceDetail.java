@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -46,6 +47,11 @@ public class ServiceDetail {
     private String description;
     @OneToMany(mappedBy = "serviceDetail")
     private Set<ServiceDetailImage> serviceDetailImages = new LinkedHashSet<>();
+
+    @NotNull
+    @ColumnDefault("0")
+    @Column(name = "duration", nullable = false)
+    private Integer duration;
 
 
 }

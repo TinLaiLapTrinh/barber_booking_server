@@ -21,9 +21,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +59,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Integer createFullOrder(OrderRequest request) {
+        // 1. Kiểm tra tồn tại các thực thể cơ bản
         User customer = userRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng"));
         User barber = userRepository.findById(request.getBarberId())
@@ -64,15 +67,9 @@ public class OrderServiceImpl implements OrderService {
         Shop shop = shopRepository.findById(request.getShopId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy cửa hàng"));
 
-        Voucher voucher = voucherRepository.findVoucherById(request.getVoucherId());
+        Voucher voucher = request.getVoucherId() != null ?
+                voucherRepository.findVoucherById(request.getVoucherId()) : null;
 
-        if (!request.getEndTime().isAfter(request.getStartTime())) {
-            throw new BusinessException("Giờ kết thúc phải sau giờ bắt đầu!");
-        }
-
-        if (this.checkBarberConflict(barber.getId(), request.getOrderDate(), request.getStartTime(), request.getEndTime())) {
-            throw new IllegalStateException("Thợ đã bận trong khung giờ này!");
-        }
         Order order = new Order();
         order.setCustomer(customer);
         order.setBarber(barber);
@@ -80,13 +77,11 @@ public class OrderServiceImpl implements OrderService {
         order.setVoucher(voucher);
         order.setOrderDate(request.getOrderDate());
         order.setStartTime(request.getStartTime());
-        order.setEndTime(request.getEndTime());
         order.setStatus(OrderStatus.PENDING);
-        if (order.getOrderDetails() == null) {
-            order.setOrderDetails(new HashSet<>());
-        }
+        order.setOrderDetails(new HashSet<>());
 
         float runningTotal = 0;
+        int runningTotalDuration = 0;
 
         for (OrderDetailRequest dReq : request.getDetails()) {
             ShopServiceDetail ssd = shopServiceDetailRepository.findById(dReq.getShopServiceDetailId())
@@ -99,13 +94,22 @@ public class OrderServiceImpl implements OrderService {
             detail.setFinalPrice(ssd.getPrice());
 
             order.getOrderDetails().add(detail);
+
             runningTotal += ssd.getPrice();
+            runningTotalDuration += ssd.getServiceDetail().getDuration();
         }
 
+        LocalTime calculatedEndTime = request.getStartTime().plusMinutes(runningTotalDuration);
+        if (this.checkBarberConflict(barber.getId(), request.getOrderDate(), request.getStartTime(), calculatedEndTime)) {
+            throw new IllegalStateException("Thợ đã bận trong khung giờ từ " + request.getStartTime() + " đến " + calculatedEndTime);
+        }
+
+        order.setEndTime(calculatedEndTime);
         order.setTotalPrice(runningTotal);
+        order.setTotalDuration(runningTotalDuration);
+
 
         Order savedOrder = orderRepository.save(order);
-
         return savedOrder.getId();
     }
 
@@ -169,7 +173,8 @@ public class OrderServiceImpl implements OrderService {
                 order.getPaymentStatus() != null ? order.getPaymentStatus().getDisplayValue() : null,
                 order.getPaymentMethod() != null ? order.getPaymentMethod().getDisplayValue() : null,
                 order.getTotalPrice(),
-                order.getFinalPrice()
+                order.getFinalPrice(),
+                order.getTotalDuration()
         );
     }
 
@@ -289,6 +294,7 @@ public class OrderServiceImpl implements OrderService {
                 .serviceSummary(order.getOrderDetails().stream()
                         .map(detail -> detail.getShopServiceDetail().getServiceDetail().getServiceType())
                         .collect(Collectors.joining(", ")))
+                .TotalDuration(order.getTotalDuration())
                 .build());
     }
 
@@ -320,6 +326,25 @@ public class OrderServiceImpl implements OrderService {
         rateRepository.save(rate);
 
         return new MessageResponse("Đánh giá đơn hàng thành công! Cảm ơn bạn.", orderId);
+    }
+
+    @Override
+    public List<BarberWeekScheduleResponse> getBarberScheduleByWeek(Integer barberId, LocalDate date) {
+        LocalDate startOfWeek = date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        LocalDate endOfWeek = date.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+
+        List<Order> orders = orderRepository.findByBarberIdAndOrderDateBetweenOrderByOrderDateAscStartTimeAsc(
+                barberId, startOfWeek, endOfWeek);
+
+        return orders.stream()
+                .map(o -> BarberWeekScheduleResponse.builder()
+                        .orderId(o.getId())
+                        .orderDate(o.getOrderDate())
+                        .startTime(o.getStartTime())
+                        .totalDuration(o.getTotalDuration())
+                        .status(o.getStatus().name())
+                        .build())
+                .collect(Collectors.toList());
     }
 
 }

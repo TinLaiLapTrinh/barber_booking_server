@@ -4,15 +4,20 @@ package com.example.barber_server.controllers;
 import com.example.barber_server.auth.JwtService;
 import com.example.barber_server.dto.AuthResponse;
 import com.example.barber_server.dto.LoginRequest;
+import com.example.barber_server.dto.dto_response.BarberResponse;
+import com.example.barber_server.dto.dto_response.BarberWeekScheduleResponse;
 import com.example.barber_server.dto.dto_response.RateResponse;
 import com.example.barber_server.dto.dto_response.UserPrincipal;
 import com.example.barber_server.models.User;
+import com.example.barber_server.services.OrderService;
 import com.example.barber_server.services.UploadImageService;
 import com.example.barber_server.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,8 +26,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/users")
 @Tag(name = "User Controller", description = "Quản lý tài khoản và đăng nhập")
@@ -31,12 +39,13 @@ public class UserController
     private final UserService userService;
     private final JwtService jwtService;
     private final UploadImageService uploadService;
+    private final OrderService orderService;
 
-    public UserController(UserService userService, JwtService jwtService, UploadImageService uploadService) {
-        this.userService = userService;
-        this.jwtService = jwtService;
-        this.uploadService= uploadService;
-    }
+//    public UserController(UserService userService, JwtService jwtService, UploadImageService uploadService) {
+//        this.userService = userService;
+//        this.jwtService = jwtService;
+//        this.uploadService= uploadService;
+//    }
 
 
 
@@ -129,7 +138,7 @@ public class UserController
 
     @Operation(summary = "Danh sách thợ cắt tóc", description = "Danh sách thợ cắt tóc ('Có phân trang')")
     @GetMapping("/barbers")
-    public ResponseEntity<Page<User>> getBarbers(
+    public ResponseEntity<Page<BarberResponse>> getBarbers(
             @RequestParam Map<String, String> params,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -155,6 +164,14 @@ public class UserController
 
         Page<RateResponse> rateResponsePage = userService.getRateByBarberId(id, pageable);
         return ResponseEntity.ok(rateResponsePage);
+    }
+
+    @Operation(summary = "Lịch đặt của barber")
+    @GetMapping("/barber/{id}/week-schedule")
+    public ResponseEntity<List<BarberWeekScheduleResponse>> getBarberSchedule(
+            @PathVariable Integer id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(orderService.getBarberScheduleByWeek(id, date));
     }
 
 
