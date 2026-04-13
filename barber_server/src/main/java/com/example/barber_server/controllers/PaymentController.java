@@ -3,6 +3,7 @@ package com.example.barber_server.controllers;
 
 import com.example.barber_server.dto.dto_response.MomoResponse;
 import com.example.barber_server.models.Order;
+import com.example.barber_server.models.enums.PaymentStatus;
 import com.example.barber_server.repositories.OrderRepository;
 import com.example.barber_server.services.OrderService;
 import com.example.barber_server.services.PaymentService;
@@ -74,5 +75,16 @@ public class PaymentController {
             @RequestParam Map<String, String> queryParams) {
         Map<String, String> result = paymentService.processVNPayCallback(queryParams);
         return ResponseEntity.ok(result);
+    }
+
+    @Operation(summary = "Kiểm tra trạng thái thanh toán (Dành cho Mobile Polling)")
+    @GetMapping("/status/{orderId}")
+    public ResponseEntity<Boolean> checkOrderPaymentStatus(
+            @PathVariable Integer orderId
+    ){
+        PaymentStatus paidStatus = PaymentStatus.PAID;
+        boolean isPaid = orderService.existsByIdAndPaymentStatus(orderId, paidStatus);
+
+        return ResponseEntity.ok(isPaid);
     }
 }

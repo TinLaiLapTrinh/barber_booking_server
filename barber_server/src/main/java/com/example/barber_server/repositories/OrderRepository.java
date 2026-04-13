@@ -1,6 +1,7 @@
 package com.example.barber_server.repositories;
 
 import com.example.barber_server.models.Order;
+import com.example.barber_server.models.enums.PaymentStatus;
 import feign.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -47,4 +48,6 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
             LocalDate startDate,
             LocalDate endDate
     );
+
+    boolean existsByIdAndPaymentStatus(Integer id, PaymentStatus paymentStatus);
 }

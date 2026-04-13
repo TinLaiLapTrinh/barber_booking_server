@@ -161,6 +161,7 @@ public class OrderController {
     public ResponseEntity<?> historyOrder(
             @AuthenticationPrincipal UserPrincipal principal,
             @ParameterObject Pageable pageable) {
+        System.out.println("Android requested Page: " + pageable.getPageNumber());
 
         if (!SecurityUtils.isCustomer()) {
             ErrorResponse error = ErrorResponse.builder()

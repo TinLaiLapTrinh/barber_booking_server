@@ -10,4 +10,5 @@ public class ShopServiceDetailResponse {
     private ServiceDetailResponse serviceDetail;
     private Float price;
     private Boolean isActive;
+    private Integer duration;
 }

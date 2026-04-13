@@ -8,6 +8,7 @@ import com.example.barber_server.dto.dto_response.MessageResponse;
 import com.example.barber_server.dto.dto_response.OrderResponse;
 import com.example.barber_server.models.Order;
 import com.example.barber_server.models.User;
+import com.example.barber_server.models.enums.PaymentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -38,4 +39,6 @@ public interface OrderService {
     MessageResponse rating(Integer orderId, User customer, RateRequest rateRequest);
 
     List<BarberWeekScheduleResponse> getBarberScheduleByWeek(Integer barberId, LocalDate date);
+
+    boolean existsByIdAndPaymentStatus(Integer id, PaymentStatus paymentStatus);
 }

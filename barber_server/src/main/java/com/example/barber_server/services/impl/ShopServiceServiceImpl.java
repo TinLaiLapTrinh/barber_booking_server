@@ -74,7 +74,8 @@ public class ShopServiceServiceImpl implements ShopServiceService {
                 entity.getId(),
                 sdRes,
                 entity.getPrice(),
-                entity.getIsActive()
+                entity.getIsActive(),
+                entity.getServiceDetail().getDuration()
         );
     }
 

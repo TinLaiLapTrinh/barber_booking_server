@@ -57,9 +57,10 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.isBarberBusy(barberId,date, start,end);
     }
 
+    @Transactional
     @Override
     public Integer createFullOrder(OrderRequest request) {
-        // 1. Kiểm tra tồn tại các thực thể cơ bản
+
         User customer = userRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng"));
         User barber = userRepository.findById(request.getBarberId())
@@ -345,6 +346,11 @@ public class OrderServiceImpl implements OrderService {
                         .status(o.getStatus().name())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean existsByIdAndPaymentStatus(Integer id, PaymentStatus paymentStatus) {
+        return orderRepository.existsByIdAndPaymentStatus(id, paymentStatus);
     }
 
 }
