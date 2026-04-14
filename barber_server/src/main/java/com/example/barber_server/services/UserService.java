@@ -15,5 +15,6 @@ public interface UserService {
     Page<BarberResponse> getBarbers(Map<String, String> params, int page, int size);
     Page<User> getCustomer(Map<String, String> params, int page, int size);
     User getUserById(int id);
+    BarberResponse getBarberById(Integer id);
     Page<RateResponse> getRateByBarberId(Integer barberId, Pageable pageable);
 }

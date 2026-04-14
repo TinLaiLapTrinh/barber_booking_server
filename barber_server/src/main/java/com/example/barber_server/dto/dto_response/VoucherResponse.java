@@ -21,6 +21,9 @@ public class VoucherResponse {
     private LocalDate expiryDate;
     private Integer shopId;
     private Boolean isActive;
+    private Boolean discountType;
+    private Double minOrderValue;
+    private Double maxDiscountValue;
     private Double actualDiscount;
     private Boolean isEligible;
 

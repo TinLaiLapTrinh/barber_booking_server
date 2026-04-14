@@ -127,6 +127,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public BarberResponse getBarberById(Integer id) {
+        User barber = userRepository.findUserById(id);
+        return BarberResponse.builder()
+                .id(barber.getId())
+                .firstName(barber.getFirstName())
+                .lastName(barber.getLastName())
+                .email(barber.getEmail())
+                .phoneNumber(barber.getPhoneNumber())
+                .avatar(barber.getAvatar())
+                .rateAvg(rateRepository.calculateAverageRatingForBarber(barber.getId()))
+                .bookingCount(orderRepository.countTotalOrdersByBarberId(barber.getId()))
+                .build();
+    }
+
+    @Override
     public Page<RateResponse> getRateByBarberId(Integer barberId, Pageable pageable) {
 
         User user = userRepository.findById(barberId).orElse(null);

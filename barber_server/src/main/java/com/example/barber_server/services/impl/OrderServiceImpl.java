@@ -60,7 +60,14 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     @Override
     public Integer createFullOrder(OrderRequest request) {
-
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime bookingDateTime = LocalDateTime.of(request.getOrderDate(), request.getStartTime());
+        if (bookingDateTime.isBefore(now)) {
+            throw new BusinessException("Không thể đặt lịch cho thời gian đã qua. Vui lòng chọn khung giờ khác!");
+        }
+        if (bookingDateTime.isBefore(now.plusMinutes(15))) {
+            throw new BusinessException("Vui lòng đặt lịch trước ít nhất 15 phút!");
+        }
         User customer = userRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng"));
         User barber = userRepository.findById(request.getBarberId())
@@ -70,6 +77,8 @@ public class OrderServiceImpl implements OrderService {
 
         Voucher voucher = request.getVoucherId() != null ?
                 voucherRepository.findVoucherById(request.getVoucherId()) : null;
+        if(request.getPaymentMethod()==null)
+            request.setPaymentMethod(PaymentMethod.CASH);
 
         Order order = new Order();
         order.setCustomer(customer);
@@ -79,6 +88,7 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderDate(request.getOrderDate());
         order.setStartTime(request.getStartTime());
         order.setStatus(OrderStatus.PENDING);
+        order.setPaymentMethod(request.getPaymentMethod());
         order.setOrderDetails(new HashSet<>());
 
         float runningTotal = 0;
@@ -98,6 +108,19 @@ public class OrderServiceImpl implements OrderService {
 
             runningTotal += ssd.getPrice();
             runningTotalDuration += ssd.getServiceDetail().getDuration();
+        }
+        if (voucher != null) {
+
+            Double totalAmount = (double) runningTotal;
+
+            Double discountAmount = voucherService.calculateActualDiscount(voucher, totalAmount);
+
+            float finalPrice = (float) (totalAmount - discountAmount);
+            if (finalPrice < 0) finalPrice = 0;
+
+            order.setFinalPrice(finalPrice);
+        } else {
+            order.setFinalPrice(runningTotal);
         }
 
         LocalTime calculatedEndTime = request.getStartTime().plusMinutes(runningTotalDuration);
@@ -153,13 +176,38 @@ public class OrderServiceImpl implements OrderService {
         List<OrderDetailResponse> detailResponses = order.getOrderDetails().stream()
                 .map(this::mapToOrderDetailResponse)
                 .toList();
+        VoucherResponse voucherResponse = null;
+
+        if (order.getVoucher() != null) {
+            Voucher voucher = order.getVoucher();
+
+            voucherResponse = new VoucherResponse(
+                    voucher.getId(),
+                    voucher.getName(),
+                    voucher.getDiscount(),
+                    voucher.getExpiry(),
+                    voucher.getDateStart(),
+                    voucher.getExpiryDate(),
+                    voucher.getShop().getId(),
+                    voucher.getIsActive(),
+                    voucher.getDiscountType(),
+                    voucher.getMinOrderValue(),
+                    voucher.getMaxDiscountValue(),
+                    null,
+                    null
+            );
+        }
 
         return new OrderResponse(
                 order.getId(),
                 order.getShop().getId(),
                 order.getShop().getName(),
+                order.getShop().getAddress(),
+                order.getShop().getAvatar(),
+                order.getShop().getBackground(),
                 order.getShop().getLongitude(),
                 order.getShop().getLatitude(),
+                voucherResponse,
                 order.getBarber().getId(),
                 order.getBarber().getFirstName() + " " + order.getBarber().getLastName(),
                 order.getCustomer().getId(),
@@ -173,6 +221,7 @@ public class OrderServiceImpl implements OrderService {
                 order.getPaymentStatus() != null ? order.getPaymentStatus().name() : null,
                 order.getPaymentStatus() != null ? order.getPaymentStatus().getDisplayValue() : null,
                 order.getPaymentMethod() != null ? order.getPaymentMethod().getDisplayValue() : null,
+                order.getPaymentMethod() != null ? order.getPaymentMethod().name() : null,
                 order.getTotalPrice(),
                 order.getFinalPrice(),
                 order.getTotalDuration()
@@ -351,6 +400,14 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public boolean existsByIdAndPaymentStatus(Integer id, PaymentStatus paymentStatus) {
         return orderRepository.existsByIdAndPaymentStatus(id, paymentStatus);
+    }
+
+    @Override
+    public OrderResponse getOrderById(Integer orderId, User user) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new BusinessException("Không tìm thấy đơn hàng ID: " + orderId));
+        if(!order.getBarber().getId().equals(user.getId())&&!order.getCustomer().getId().equals(user.getId()))
+            throw new BusinessException("Người dùng không có thẩm quyền truy cập hành động này");
+        return convertToResponse(order);
     }
 
 }

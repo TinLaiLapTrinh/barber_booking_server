@@ -1,6 +1,7 @@
 package com.example.barber_server.dto.dto_response;
 
 import com.example.barber_server.models.enums.OrderStatus;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -14,12 +15,17 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 @Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OrderResponse {
     private Integer id;
     private Integer shopId;
     private String shopName;
+    private String shopAddress;
+    private String shopAvatar;
+    private String shopBackground;
     private Float longitude;
     private Float latitude;
+    private VoucherResponse voucher;
     private Integer barberId;
     private String barberName;
     private Integer userId;
@@ -33,6 +39,7 @@ public class OrderResponse {
     private String paymentStatus;
     private String paymentStatusName;
     private String paymentMethodName;
+    private String paymentMethod;
     private Float totalPrice;
     private Float finalPrice;
     private Integer TotalDuration;

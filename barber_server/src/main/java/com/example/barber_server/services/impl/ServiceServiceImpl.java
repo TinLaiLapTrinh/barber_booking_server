@@ -1,9 +1,12 @@
 package com.example.barber_server.services.impl;
 
+import com.example.barber_server.dto.dto_response.ServiceResponse;
+import com.example.barber_server.exception.ResourceNotFoundException;
 import com.example.barber_server.repositories.ServiceRepository;
 import com.example.barber_server.services.ServiceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,8 +18,23 @@ public class ServiceServiceImpl implements ServiceService {
 
 
     @Override
-    public List<com.example.barber_server.models.Service> findAllService() {
-        return serviceRepository.findAll();
+    public List<ServiceResponse> findAllService() {
+        List<com.example.barber_server.models.Service> services = serviceRepository.findAll();
+
+        // Chuyển đổi toàn bộ danh sách sang DTO
+        List<ServiceResponse> serviceResponses = services.stream()
+                .map(this::mapToResponse)
+                .toList();
+
+        return serviceResponses;
+    }
+    private ServiceResponse mapToResponse(com.example.barber_server.models.Service service) {
+        return new ServiceResponse(
+                service.getId(),
+                service.getName(),
+                service.getDescription(),
+                service.getIcon()
+        );
     }
 
     @Override

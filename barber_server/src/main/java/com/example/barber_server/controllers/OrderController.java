@@ -6,7 +6,6 @@ import com.example.barber_server.dto.dto_request.RateRequest;
 import com.example.barber_server.dto.dto_response.*;
 import com.example.barber_server.exception.ResourceNotFoundException;
 import com.example.barber_server.models.Order;
-import com.example.barber_server.models.Service;
 import com.example.barber_server.models.User;
 import com.example.barber_server.repositories.OrderRepository;
 import com.example.barber_server.repositories.UserRepository;
@@ -14,20 +13,17 @@ import com.example.barber_server.services.OrderService;
 import com.example.barber_server.utils.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -197,6 +193,15 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Chi tiết dịch vụ")
+    @GetMapping(value = "/order/{id}")
+    public ResponseEntity<OrderResponse> getOrder(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal UserPrincipal principal
+    ){
+        User owner = userRepository.findUserById(principal.getId());
+        return ResponseEntity.ok(orderService.getOrderById(id, owner));
+    }
 
 
 

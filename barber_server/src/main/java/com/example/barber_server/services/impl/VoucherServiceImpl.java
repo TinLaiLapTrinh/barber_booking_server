@@ -100,7 +100,8 @@ public class VoucherServiceImpl implements VoucherService {
                 .collect(Collectors.toList());
     }
 
-    private double calculateActualDiscount(Voucher v, Double totalPrice) {
+    @Override
+    public double calculateActualDiscount(Voucher v, Double totalPrice) {
         if (totalPrice < v.getMinOrderValue()) return 0.0;
 
         double amount = 0.0;
@@ -181,12 +182,12 @@ public class VoucherServiceImpl implements VoucherService {
 
     private VoucherResponse voucherConvertToResponse(Voucher voucher) {
         return new VoucherResponse(voucher.getId(), voucher.getName(), voucher.getDiscount(),voucher.getExpiry(),
-                voucher.getDateStart(),voucher.getExpiryDate(),voucher.getShop().getId(), voucher.getIsActive(), null, null);
+                voucher.getDateStart(),voucher.getExpiryDate(),voucher.getShop().getId(), voucher.getIsActive(), voucher.getDiscountType(),voucher.getMinOrderValue(), voucher.getMaxDiscountValue(), null,null);
     }
 
     private VoucherResponse voucherConvertToResponseUse(Voucher voucher, Double actualDiscount, Boolean isEligible) {
         return new VoucherResponse(voucher.getId(), voucher.getName(), voucher.getDiscount(),voucher.getExpiry(),
-                voucher.getDateStart(),voucher.getExpiryDate(),voucher.getShop().getId(), voucher.getIsActive(), actualDiscount, isEligible);
+                voucher.getDateStart(),voucher.getExpiryDate(),voucher.getShop().getId(), voucher.getIsActive(),  voucher.getDiscountType(),voucher.getMinOrderValue(), voucher.getMaxDiscountValue(), actualDiscount, isEligible);
     }
 
 

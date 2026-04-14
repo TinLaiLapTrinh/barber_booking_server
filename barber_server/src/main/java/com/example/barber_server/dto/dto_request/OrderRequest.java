@@ -1,5 +1,6 @@
 package com.example.barber_server.dto.dto_request;
 
+import com.example.barber_server.models.enums.PaymentMethod;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -18,6 +19,7 @@ public class OrderRequest {
     private Integer barberId;
 
     private Integer voucherId;
+
     @NotNull(message = "ID cửa hàng không được để trống")
     private Integer shopId;
 
@@ -32,6 +34,8 @@ public class OrderRequest {
     @NotNull(message = "Giờ bắt đầu không được để trống")
     @JsonFormat(pattern = "HH:mm:ss")
     private LocalTime endTime;
+
+    private PaymentMethod paymentMethod;
 
     @NotEmpty(message = "Đơn hàng phải có ít nhất một dịch vụ")
     private List<OrderDetailRequest> details;

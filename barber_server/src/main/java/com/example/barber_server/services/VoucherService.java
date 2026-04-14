@@ -3,6 +3,7 @@ package com.example.barber_server.services;
 import com.example.barber_server.dto.dto_request.VoucherRequest;
 import com.example.barber_server.dto.dto_response.MessageResponse;
 import com.example.barber_server.dto.dto_response.VoucherResponse;
+import com.example.barber_server.models.Voucher;
 
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ public interface VoucherService {
 
     MessageResponse updateVoucher(Integer voucherId, VoucherRequest voucher);
 
+    double calculateActualDiscount(Voucher v, Double totalPrice);
 
 
 }

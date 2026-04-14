@@ -174,6 +174,14 @@ public class UserController
         return ResponseEntity.ok(orderService.getBarberScheduleByWeek(id, date));
     }
 
+    @Operation(summary = "Chi tiết barber")
+    @GetMapping("/barber/{id}")
+    public ResponseEntity<BarberResponse> getBarberById(
+            @PathVariable Integer id
+    ){
+        return ResponseEntity.ok(userService.getBarberById(id));
+    }
+
 
 
 }

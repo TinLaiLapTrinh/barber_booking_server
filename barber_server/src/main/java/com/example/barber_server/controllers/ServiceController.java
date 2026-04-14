@@ -2,6 +2,7 @@ package com.example.barber_server.controllers;
 
 import com.example.barber_server.dto.dto_response.ImageResponse;
 import com.example.barber_server.dto.dto_response.ServiceDetailResponse;
+import com.example.barber_server.dto.dto_response.ServiceResponse;
 import com.example.barber_server.models.Service;
 import com.example.barber_server.models.ServiceDetail;
 import com.example.barber_server.models.ServiceDetailImage;
@@ -35,7 +36,7 @@ public class ServiceController {
 
     @Operation(summary = "Danh sách dịch vụ")
     @GetMapping("")
-    public ResponseEntity<List<Service>> getServices() {
+    public ResponseEntity<List<ServiceResponse>> getServices() {
         return ResponseEntity.ok(serviceService.findAllService());
     }
 

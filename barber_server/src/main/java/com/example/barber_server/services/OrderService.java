@@ -41,4 +41,6 @@ public interface OrderService {
     List<BarberWeekScheduleResponse> getBarberScheduleByWeek(Integer barberId, LocalDate date);
 
     boolean existsByIdAndPaymentStatus(Integer id, PaymentStatus paymentStatus);
+
+    OrderResponse getOrderById(Integer orderId, User user);
 }
