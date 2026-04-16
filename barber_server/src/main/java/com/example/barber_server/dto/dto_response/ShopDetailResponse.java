@@ -23,10 +23,10 @@ public class ShopDetailResponse {
     private LocationInfo province;
     private LocationInfo ward;
     private List<ShopServiceResponse> shopServiceResponses;
-//
-//    private List<ShopServiceDetailResponse> initialServices;
     private Double rateAvg;
     private Long bookingCount;
+    private Boolean isActive;
+
 
     @Data
     @AllArgsConstructor

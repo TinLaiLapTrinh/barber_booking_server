@@ -1,6 +1,6 @@
 package com.example.barber_server.services;
-import com.example.barber_server.dto.dto_response.BarberResponse;
-import com.example.barber_server.dto.dto_response.RateResponse;
+import com.example.barber_server.dto.dto_response.*;
+import com.example.barber_server.models.Shop;
 import com.example.barber_server.models.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,4 +17,7 @@ public interface UserService {
     User getUserById(int id);
     BarberResponse getBarberById(Integer id);
     Page<RateResponse> getRateByBarberId(Integer barberId, Pageable pageable);
+    Page<UserResponse> getAllUsers(Pageable pageable);
+    MessageResponse updateUser(Integer userId, Boolean isActive);
+    Page<ShopResponse> findAllShopResponseByBarberId(Integer barberId, Pageable pageable);
 }

@@ -128,15 +128,10 @@ public class ShopController {
     @GetMapping("/shop/{shopId}/rates")
     public ResponseEntity<Page<RateResponse>> getRateByShop(
             @PathVariable Integer shopId,
-            @ParameterObject Pageable pageable
+            @org.springframework.data.web.PageableDefault(size = 5, page = 0) org.springframework.data.domain.Pageable pageable
     ){
 
         return ResponseEntity.ok(shopService.getRateByShopId(shopId,pageable));
     }
-
-
-
-
-
 
 }

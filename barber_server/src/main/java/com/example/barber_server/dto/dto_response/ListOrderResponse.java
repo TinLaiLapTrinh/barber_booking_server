@@ -24,6 +24,8 @@ public class ListOrderResponse {
 
     private Integer barberId;
     private String barberName;
+    private Integer customerId;
+    private String customerName;
 
     private String status;
     private String statusName;

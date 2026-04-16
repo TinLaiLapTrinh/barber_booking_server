@@ -43,4 +43,6 @@ public interface OrderService {
     boolean existsByIdAndPaymentStatus(Integer id, PaymentStatus paymentStatus);
 
     OrderResponse getOrderById(Integer orderId, User user);
+
+    Page<ListOrderResponse> getAllOrder(Map<String,String> params);
 }

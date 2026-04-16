@@ -4,10 +4,7 @@ package com.example.barber_server.controllers;
 import com.example.barber_server.auth.JwtService;
 import com.example.barber_server.dto.AuthResponse;
 import com.example.barber_server.dto.LoginRequest;
-import com.example.barber_server.dto.dto_response.BarberResponse;
-import com.example.barber_server.dto.dto_response.BarberWeekScheduleResponse;
-import com.example.barber_server.dto.dto_response.RateResponse;
-import com.example.barber_server.dto.dto_response.UserPrincipal;
+import com.example.barber_server.dto.dto_response.*;
 import com.example.barber_server.models.User;
 import com.example.barber_server.services.OrderService;
 import com.example.barber_server.services.UploadImageService;
@@ -41,15 +38,6 @@ public class UserController
     private final UploadImageService uploadService;
     private final OrderService orderService;
 
-//    public UserController(UserService userService, JwtService jwtService, UploadImageService uploadService) {
-//        this.userService = userService;
-//        this.jwtService = jwtService;
-//        this.uploadService= uploadService;
-//    }
-
-
-
-
     @Operation(summary = "Đăng nhập hệ thống", description = "Nhận username/password và trả về JWT")
     @PostMapping("/login")
     public ResponseEntity<?> login(@ModelAttribute LoginRequest request) {
@@ -59,6 +47,43 @@ public class UserController
             return ResponseEntity.ok(new AuthResponse(token));
         }
         return ResponseEntity.status(401).body("Invalid credentials");
+    }
+
+    @Operation(summary = "Lấy danh sách người dùng")
+    @GetMapping("")
+    public ResponseEntity<?> getUser(
+            @AuthenticationPrincipal UserPrincipal principal,
+            Pageable pageable
+    ){
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token không hợp lệ hoặc đã hết hạn");
+        }
+
+        User user = userService.getUserByUsername(principal.getUsername());
+
+        if (user == null || !"ADMIN".equals(user.getUserType())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Bạn không có quyền truy cập chức năng này");
+        }
+
+        return ResponseEntity.ok(userService.getAllUsers(pageable));
+    }
+
+    @Operation(summary = "Cập nhật trạng thái hoạt động người dùng (ADMIN)")
+    @PatchMapping("user/{id}/update-status")
+    public ResponseEntity<?> updateStatus(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Integer id,
+            @RequestBody Boolean isActive
+    ){
+        User currentUser = userService.getUserByUsername(principal.getUsername());
+
+        if (currentUser.getId().equals(id)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MessageResponse("Bạn không thể tự vô hiệu hóa tài khoản của chính mình!", id));
+        }
+
+        MessageResponse response = userService.updateUser(id, isActive);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Lấy thông tin người dùng hiện tại", description = "Dùng Token để lấy Profile")
@@ -83,7 +108,7 @@ public class UserController
                     user.setAvatar(imageUrl);
                 }
 
-                user.setUserType("Customer");
+                user.setUserType("CUSTOMER");
                 User savingUser = userService.addUser(user);
                 return ResponseEntity.status(HttpStatus.CREATED).body(savingUser);
             } catch (IOException e) {
@@ -105,7 +130,7 @@ public class UserController
                         user.setAvatar(imageUrl);
                     }
 
-                    user.setUserType("Barber");
+                    user.setUserType("BARBER");
                     User savedUser = userService.addUser(user);
                     return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
                 } catch (IOException e) {
@@ -182,6 +207,13 @@ public class UserController
         return ResponseEntity.ok(userService.getBarberById(id));
     }
 
-
+    @Operation(summary = "Các chi nhánh barber làm việc")
+    @GetMapping("/barber/{id}/shop")
+    public ResponseEntity<Page<ShopResponse>> getBarberShop(
+            @PathVariable Integer id,
+            Pageable pageable
+    ){
+        return ResponseEntity.ok(userService.findAllShopResponseByBarberId(id,pageable));
+    }
 
 }

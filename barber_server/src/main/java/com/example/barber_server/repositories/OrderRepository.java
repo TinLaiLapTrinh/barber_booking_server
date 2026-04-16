@@ -1,5 +1,7 @@
 package com.example.barber_server.repositories;
 
+import com.example.barber_server.dto.dto_response.DailyRevenueDTO;
+import com.example.barber_server.dto.dto_response.OrderResponse;
 import com.example.barber_server.models.Order;
 import com.example.barber_server.models.enums.PaymentStatus;
 import feign.Param;
@@ -50,4 +52,20 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
     );
 
     boolean existsByIdAndPaymentStatus(Integer id, PaymentStatus paymentStatus);
+    Page<Order>  findAllByOrderDate(LocalDate date, Pageable pageable);
+
+    @Query("SELECT SUM(o.finalPrice) FROM Order o " +
+            "WHERE o.status = 'COMPLETED' AND o.orderDate BETWEEN :start AND :end")
+    Double getTotalRevenueBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
+
+    @Query("SELECT COUNT(o) FROM Order o " +
+            "WHERE o.status = 'COMPLETED' AND o.orderDate BETWEEN :start AND :end")
+    Integer getTotalOrdersBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
+
+    @Query("SELECT new com.example.barber_server.dto.dto_response.DailyRevenueDTO(" +
+            "CAST(o.orderDate AS string), SUM(o.finalPrice), COUNT(o)) " +
+            "FROM Order o " +
+            "WHERE o.status = 'COMPLETED' AND o.orderDate BETWEEN :start AND :end " +
+            "GROUP BY o.orderDate ORDER BY o.orderDate ASC")
+    List<DailyRevenueDTO> getDailyRevenueStats(@Param("start") LocalDate start, @Param("end") LocalDate end);
 }

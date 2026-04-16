@@ -31,16 +31,14 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/error").permitAll()
                         .requestMatchers("/api/users/login", "/api/users/profile","/api/users/customers").permitAll()
                         .requestMatchers("/api/payments/**").permitAll()
-                        // 2. PUBLIC GET: Cho phép xem thông tin chung (Shop, Service, Voucher, Detail)
-                        .requestMatchers(HttpMethod.GET, "/api/services/**", "/api/shops/**","/api/orders/order/**","/api/users/barber/{id}/week-schedule","/api/users/barber/{id}","/api/users/barbers").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/services/**", "/api/shops/**","/api/orders/order/**","/api/users/barber/{id}/week-schedule","/api/users/barber/{id}","/api/users/barbers","/api/location/**,","/api/users/barber/{id}/shop").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/customer").permitAll()
-                        // 3. ORDER LOGIC: Phân quyền theo vai trò thao tác đơn hàng
                         .requestMatchers(HttpMethod.POST, "/api/orders/order").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/orders/order/*/cancel").hasAnyRole("CUSTOMER", "BARBER", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/orders/order/*/update").hasAnyRole("BARBER", "ADMIN")
 
                         // 4. ADMIN ONLY: Quản lý hệ thống, tạo Shop, Service, Voucher
-                        .requestMatchers(HttpMethod.POST, "/api/shops/shop/**", "/api/services/**","/api/users/barber").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/shops/shop/**", "/api/services/**","/api/users/barber","/api/orders","api/users","api/users/user/{id}/update-status","/api/admin/dashboard/**").hasRole("ADMIN")
 
                         // 5. CÒN LẠI: Tất cả các request khác phải đăng nhập
                         .anyRequest().authenticated()

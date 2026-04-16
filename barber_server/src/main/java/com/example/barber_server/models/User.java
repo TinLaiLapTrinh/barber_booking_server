@@ -64,5 +64,9 @@ public class User {
     @Column(name = "user_type", nullable = false)
     private String userType;
 
+    @ColumnDefault("1")
+    @Column(name = "is_active")
+    private Boolean isActive;
+
 
 }

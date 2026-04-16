@@ -147,6 +147,7 @@ public class ShopServiceImpl implements ShopService {
                 .background(shop.getBackground())
                 .rateAvg(rateRepository.calculateAverageRatingForShop(shop.getId()))
                 .bookingCount(orderRepository.countTotalOrdersByShopId(shop.getId()))
+                .isActive(shop.getIsActive())
                 .build();
     }
 
@@ -231,7 +232,7 @@ public class ShopServiceImpl implements ShopService {
                                 shop.getWardCode().getCode(),
                                 shop.getWardCode().getName()
                         ) : null)
-
+                .isActive(shop.getIsActive())
                 // Map Danh sách Tabs và Thống kê
                 .shopServiceResponses(shopServiceResponses)
                 .rateAvg(avgRate != null ? avgRate : 0.0)

@@ -17,14 +17,13 @@ import com.example.barber_server.utils.SecurityUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.time.temporal.TemporalAdjusters;
 import java.util.HashSet;
 import java.util.List;
@@ -329,23 +328,8 @@ public class OrderServiceImpl implements OrderService {
     public Page<ListOrderResponse> orderHistory(Integer customerId, Pageable pageable) {
         Page<Order> orders = orderRepository.findAllByCustomerId(customerId, pageable);
 
-        return orders.map(order -> ListOrderResponse.builder()
-                .id(order.getId())
-                .shopName(order.getShop().getName())
-                .shopAddress(order.getShop().getAddress())
-                .shopAvatar(order.getShop().getAvatar())
-                .orderDate(order.getOrderDate())
-                .startTime(order.getStartTime())
-                .barberId(order.getBarber().getId())
-                .barberName(order.getBarber().getFirstName()+ " "+ order.getBarber().getLastName())
-                .status(order.getStatus().name())
-                .statusName(order.getStatus().getDisplayValue())
-                .finalPrice(order.getFinalPrice())
-                .serviceSummary(order.getOrderDetails().stream()
-                        .map(detail -> detail.getShopServiceDetail().getServiceDetail().getServiceType())
-                        .collect(Collectors.joining(", ")))
-                .TotalDuration(order.getTotalDuration())
-                .build());
+        // Chỉ cần gọi Method Reference: this::mapToListOrderResponse
+        return orders.map(this::mapToListOrderResponse);
     }
 
     @Override
@@ -408,6 +392,52 @@ public class OrderServiceImpl implements OrderService {
         if(!order.getBarber().getId().equals(user.getId())&&!order.getCustomer().getId().equals(user.getId()))
             throw new BusinessException("Người dùng không có thẩm quyền truy cập hành động này");
         return convertToResponse(order);
+    }
+
+    @Override
+    public Page<ListOrderResponse> getAllOrder(Map<String, String> params) {
+        int page = Integer.parseInt(params.getOrDefault("page", "0"));
+        int size = Integer.parseInt(params.getOrDefault("size", "10"));
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+
+        Page<Order> orderPage = orderRepository.findAllByOrderDate(today, pageable);
+
+        return orderPage.map(this::mapToListOrderResponse);
+    }
+
+    private ListOrderResponse mapToListOrderResponse(Order order) {
+        String barberName = (order.getBarber() != null)
+                ? order.getBarber().getFirstName() + " " + order.getBarber().getLastName()
+                : "N/A";
+        String customerName = (order.getCustomer() != null)
+                ? order.getCustomer().getFirstName() + " " + order.getCustomer().getLastName()
+                : "N/A";
+
+        String summary = (order.getOrderDetails() != null)
+                ? order.getOrderDetails().stream()
+                  .map(detail -> detail.getShopServiceDetail().getServiceDetail().getServiceType())
+                  .collect(Collectors.joining(", "))
+                : "";
+
+        return ListOrderResponse.builder()
+                .id(order.getId())
+                .shopName(order.getShop() != null ? order.getShop().getName() : "N/A")
+                .shopAddress(order.getShop() != null ? order.getShop().getAddress() : "")
+                .shopAvatar(order.getShop() != null ? order.getShop().getAvatar() : "")
+                .orderDate(order.getOrderDate())
+                .startTime(order.getStartTime())
+                .barberId(order.getBarber() != null ? order.getBarber().getId() : 0)
+                .barberName(barberName)
+                .customerId(order.getCustomer().getId())
+                .customerName(customerName)
+                .status(order.getStatus() != null ? order.getStatus().name() : "")
+                .statusName(order.getStatus() != null ? order.getStatus().getDisplayValue() : "")
+                .finalPrice(order.getFinalPrice())
+                .serviceSummary(summary)
+                .TotalDuration(order.getTotalDuration()) // Ní nhớ check xem DTO là total hay Total nhé
+                .build();
     }
 
 }

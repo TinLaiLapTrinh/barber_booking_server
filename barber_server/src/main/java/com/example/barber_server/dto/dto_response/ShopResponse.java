@@ -17,5 +17,7 @@ public class ShopResponse {
     private String background;
     private Double rateAvg;
     private Long bookingCount;
+    private Boolean isActive;
+
 
 }

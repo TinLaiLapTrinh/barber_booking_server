@@ -2,14 +2,13 @@ package com.example.barber_server.services.impl;
 
 
 import com.example.barber_server.auth.JwtService;
-import com.example.barber_server.dto.dto_response.BarberResponse;
-import com.example.barber_server.dto.dto_response.RateResponse;
+import com.example.barber_server.dto.dto_response.*;
 import com.example.barber_server.exception.BusinessException;
 import com.example.barber_server.models.Rate;
+import com.example.barber_server.models.Shop;
+import com.example.barber_server.models.ShopBarber;
 import com.example.barber_server.models.User;
-import com.example.barber_server.repositories.OrderRepository;
-import com.example.barber_server.repositories.RateRepository;
-import com.example.barber_server.repositories.UserRepository;
+import com.example.barber_server.repositories.*;
 import com.example.barber_server.services.UserService;
 import jakarta.persistence.criteria.Predicate;
 
@@ -33,13 +32,15 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final RateRepository rateRepository;
     private final OrderRepository orderRepository;
+    private final ShopBarberRepository shopBarberRepository;
+    private final ShopRepository shopRepository;
 
 
     @Override
     public Boolean authenticate(String username, String password) {
         User user = userRepository.findByUsername(username);
 
-        if (user != null) {
+        if (user != null&&user.getIsActive().equals(Boolean.TRUE)) {
             return  passwordEncoder.matches(password, user.getPassword());
         }
         return false;
@@ -165,5 +166,61 @@ public class UserServiceImpl implements UserService {
                         ? rate.getOrder().getStatus().name()
                         : "N/A")
                 .build());
+    }
+
+    @Override
+    public Page<UserResponse> getAllUsers(Pageable pageable) {
+
+        Page<User> users = userRepository.findAll(pageable);
+
+        return users.map(user -> UserResponse.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .userType(user.getUserType())
+                .phoneNumber(user.getPhoneNumber())
+                .avatar(user.getAvatar())
+                .isActive(user.getIsActive())
+                .build());
+    }
+
+    @Override
+    public MessageResponse updateUser(Integer userId, Boolean isActive) {
+        // Tìm user, nếu không thấy thì có thể ném Exception hoặc trả về thông báo lỗi
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + userId));
+
+        user.setIsActive(isActive);
+        userRepository.save(user);
+
+        // Trả về MessageResponse theo cấu trúc của bạn
+        return new MessageResponse("Cập nhật trạng thái người dùng thành công", userId);
+    }
+
+    @Override
+    public Page<ShopResponse> findAllShopResponseByBarberId(Integer barberId, Pageable pageable) {
+        // 1. Lấy danh sách ShopBarber từ database
+        Page<ShopBarber> shopBarbers = shopBarberRepository.findAllByBarberId(barberId, pageable);
+
+        // 2. Mapping từ Page<ShopBarber> sang Page<ShopResponse>
+        return shopBarbers.map(shopBarber -> {
+            // Lấy thực thể Shop từ quan hệ ManyToOne
+            Shop shop = shopBarber.getShop();
+
+            // Build DTO từ Entity Shop
+            return ShopResponse.builder()
+                    .id(shop.getId())
+                    .name(shop.getName())
+                    .address(shop.getAddress())
+                    .avatar(shop.getAvatar())
+                    .background(shop.getBackground())
+                    // Lưu ý: Các field rateAvg và bookingCount cần có trong Entity Shop
+                    // hoặc bạn phải tính toán/fetch thêm từ repository khác
+                    .rateAvg(rateRepository.calculateAverageRatingForShop(shop.getId()))
+                    .bookingCount(orderRepository.countTotalOrdersByShopId(shop.getId()))
+                    .isActive(shop.getIsActive())
+                    .build();
+        });
     }
 }

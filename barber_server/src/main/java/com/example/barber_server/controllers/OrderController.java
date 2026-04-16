@@ -40,6 +40,15 @@ public class OrderController {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
 
+    @Operation(summary = "Danh sách đơn hàng")
+    @GetMapping(value = "")
+    public ResponseEntity<Page<ListOrderResponse>> getOrder(
+            @RequestParam Map<String,String> params
+
+    ){
+        return ResponseEntity.ok(orderService.getAllOrder(params));
+    }
+
     @Operation(summary = "Khách hàng đặt lịch")
     @PostMapping(value = "/order", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<MessageResponse> createOrder(
@@ -202,6 +211,8 @@ public class OrderController {
         User owner = userRepository.findUserById(principal.getId());
         return ResponseEntity.ok(orderService.getOrderById(id, owner));
     }
+
+
 
 
 
