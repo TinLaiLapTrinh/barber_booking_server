@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ShopBarberRepository extends JpaRepository<ShopBarber, Integer>, JpaSpecificationExecutor<ShopBarber> {
 
@@ -15,4 +16,6 @@ public interface ShopBarberRepository extends JpaRepository<ShopBarber, Integer>
     List<ShopBarber> findByShop_IdAndIsActiveTrue(Integer shopId);
 
     Page<ShopBarber> findAllByBarberId(Integer barberId, Pageable pageable);
+
+    Optional<ShopBarber> findByBarberIdAndShopId(Integer barberId, Integer shopId);
 }

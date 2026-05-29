@@ -50,7 +50,6 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
     implementation 'com.cloudinary:cloudinary-http5:2.0.0'
 
     implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -66,4 +65,8 @@ dependencyManagement {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.named('bootRun') {
+    jvmArgs = ["-Xmx256m", "-Xms128m"]
 }

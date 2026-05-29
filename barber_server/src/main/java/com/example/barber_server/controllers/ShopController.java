@@ -114,6 +114,17 @@ public class ShopController {
         return ResponseEntity.status(HttpStatus.CREATED).body(voucherService.createVoucher(voucherRequest, shopId));
     }
 
+    @Operation(summary = "Thêm thợ vào shop")
+    @PostMapping("/{shopId}/barbers/{barberId}")
+    public ResponseEntity<MessageResponse> addBarberToShop(
+            @PathVariable Integer shopId,
+            @PathVariable Integer barberId) {
+
+        MessageResponse response = shopBarberService.createBarberShop(barberId, shopId);
+
+        return ResponseEntity.ok(response);
+    }
+
     @Operation(summary = "Lấy danh sách thợ của quán")
     @GetMapping("/{shopId}/barbers")
     public ResponseEntity<List<BarberResponse>> getBarbersByShop(@PathVariable Integer shopId) {

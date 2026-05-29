@@ -53,6 +53,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserResponse getUserById(Integer id) {
+        User profile = userRepository.findUserById(id);
+        return UserResponse.builder()
+                .id(profile.getId())
+                .firstName(profile.getFirstName())
+                .lastName(profile.getLastName())
+                .email(profile.getEmail())
+                .userType(profile.getUserType())
+                .phoneNumber(profile.getPhoneNumber())
+                .avatar(profile.getAvatar())
+                .isActive(profile.getIsActive())
+                .build();
+    }
+
+    @Override
     public User addUser(User u) {
 
         if (userRepository.existsByUsername(u.getUsername())) {
@@ -77,6 +92,21 @@ public class UserServiceImpl implements UserService {
         }
 
         return userRepository.save(u);
+    }
+
+    @Override
+    public MessageResponse updateUserPassword(Integer userId, String password) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + userId));
+
+        if (password.length() < 6) {
+            throw new RuntimeException("Lỗi: Mật khẩu phải có ít nhất 6 ký tự!");
+        }
+
+        String encodedPassword = passwordEncoder.encode(password);
+        user.setPassword(encodedPassword);
+        userRepository.save(user);
+        return new MessageResponse("Cập nhật mật khẩu mới thành công cho người dùng: ",userId);
     }
 
 

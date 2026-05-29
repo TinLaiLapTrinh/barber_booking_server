@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -24,6 +25,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
+//        http.csrf(csrf -> csrf
+//                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+//                .ignoringRequestMatchers(
+//                        "/api/users/login",
+//                        "/api/payments/**"
+//                    )
+//                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
@@ -31,14 +39,14 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/error").permitAll()
                         .requestMatchers("/api/users/login", "/api/users/profile","/api/users/customers").permitAll()
                         .requestMatchers("/api/payments/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/services/**", "/api/shops/**","/api/orders/order/**","/api/users/barber/{id}/week-schedule","/api/users/barber/{id}","/api/users/barbers","/api/location/**,","/api/users/barber/{id}/shop").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/services/**", "/api/shops/**","/api/orders/order/**","/api/users/barber/{id}/week-schedule","/api/users/barber/{id}","/api/users/barbers","/api/location/**","/api/users/barber/{id}/shop").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/customer").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/orders/order").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/orders/order/*/cancel").hasAnyRole("CUSTOMER", "BARBER", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/orders/order/*/update").hasAnyRole("BARBER", "ADMIN")
 
                         // 4. ADMIN ONLY: Quản lý hệ thống, tạo Shop, Service, Voucher
-                        .requestMatchers(HttpMethod.POST, "/api/shops/shop/**", "/api/services/**","/api/users/barber","/api/orders","api/users","api/users/user/{id}/update-status","/api/admin/dashboard/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/shops/shop/**","/api/shops/*/barbers/*", "/api/services/**","/api/users/*/change-password","/api/users/barber","/api/orders","api/users","/api/users/user/*/update-status","/api/admin/dashboard/**").hasRole("ADMIN")
 
                         // 5. CÒN LẠI: Tất cả các request khác phải đăng nhập
                         .anyRequest().authenticated()

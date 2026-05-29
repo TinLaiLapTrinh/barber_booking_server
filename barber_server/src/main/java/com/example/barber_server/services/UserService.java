@@ -10,14 +10,28 @@ import java.util.Map;
 
 public interface UserService {
     User getUserByUsername(String username);
+
+    UserResponse getUserById(Integer id);
+
     User addUser(User u);
+
+    MessageResponse updateUserPassword(Integer userId, String password);
+
     Boolean authenticate(String username, String password);
+
     Page<BarberResponse> getBarbers(Map<String, String> params, int page, int size);
+
     Page<User> getCustomer(Map<String, String> params, int page, int size);
+
     User getUserById(int id);
+
     BarberResponse getBarberById(Integer id);
+
     Page<RateResponse> getRateByBarberId(Integer barberId, Pageable pageable);
+
     Page<UserResponse> getAllUsers(Pageable pageable);
+
     MessageResponse updateUser(Integer userId, Boolean isActive);
+
     Page<ShopResponse> findAllShopResponseByBarberId(Integer barberId, Pageable pageable);
 }

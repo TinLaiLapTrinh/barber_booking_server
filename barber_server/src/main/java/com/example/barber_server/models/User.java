@@ -59,7 +59,6 @@ public class User {
 
 
     @NotNull
-//    @ColumnDefault("'Customer'")
     @Lob
     @Column(name = "user_type", nullable = false)
     private String userType;
