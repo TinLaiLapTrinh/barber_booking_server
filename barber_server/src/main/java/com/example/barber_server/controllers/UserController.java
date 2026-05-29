@@ -11,6 +11,7 @@ import com.example.barber_server.services.UploadImageService;
 import com.example.barber_server.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,15 +39,17 @@ public class UserController
     private final UploadImageService uploadService;
     private final OrderService orderService;
 
-    @Operation(summary = "Đăng nhập hệ thống", description = "Nhận username/password và trả về JWT")
+    @Operation(summary = "Đăng nhập hệ thống", description = "Nhận username/password qua JSON và trả về JWT")
     @PostMapping("/login")
-    public ResponseEntity<?> login(@ModelAttribute LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+
         if (userService.authenticate(request.getUsername(), request.getPassword())) {
             User user = userService.getUserByUsername(request.getUsername());
-            String token = jwtService.generateToken(user.getUsername(), user.getUserType());
+            String token = jwtService.generateToken(user);
+
             return ResponseEntity.ok(new AuthResponse(token));
         }
-        return ResponseEntity.status(401).body("Invalid credentials");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     @Operation(summary = "Lấy danh sách người dùng")
@@ -90,7 +93,7 @@ public class UserController
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(@AuthenticationPrincipal UserPrincipal principal) {
         if (principal != null) {
-            User user = userService.getUserByUsername(principal.getUsername());
+            UserResponse user = userService.getUserById(principal.getId());
             return ResponseEntity.ok(user);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User không tồn tại hoặc Token hết hạn");
@@ -118,6 +121,8 @@ public class UserController
             }
     }
 
+
+
     @Operation(summary = "Đăng ký thợ cắt tóc", description = "Nhận đăng ký khách hàng")
     @PostMapping(value = "/barber", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createBarber(
@@ -131,6 +136,7 @@ public class UserController
                     }
 
                     user.setUserType("BARBER");
+                    user.setIsActive(Boolean.TRUE);
                     User savedUser = userService.addUser(user);
                     return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
                 } catch (IOException e) {
@@ -140,6 +146,18 @@ public class UserController
                 }
             }
 
+    @PutMapping("/{id}/change-password")
+    public ResponseEntity<MessageResponse> changePassword(
+            @PathVariable Integer id,
+            @RequestBody java.util.Map<String, String> body) {
+
+        String rawPassword = body.get("password");
+        // Gọi service xử lý logic liên hoàn cước
+        MessageResponse response = userService.updateUserPassword(id, rawPassword);
+
+        // Nhả về HTTP 200 OK kèm dòng tin nhắn thành công
+        return ResponseEntity.ok(response);
+    }
 //    @PostMapping(value = "/admin", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 //    public ResponseEntity<?> createAdmin(
 //            @ModelAttribute User user,

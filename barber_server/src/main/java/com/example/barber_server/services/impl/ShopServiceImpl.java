@@ -59,11 +59,9 @@ public class ShopServiceImpl implements ShopService {
     }
 
     @Override
-    @Transactional
     public ShopResponse createShop(ShopRequest shopRequest, MultipartFile imageFile, MultipartFile backgroundFile) {
         String avatarUrl = null;
         String backgroundUrl = null;
-
         try {
             if (imageFile != null && !imageFile.isEmpty()) {
                 avatarUrl = uploadImageService.uploadImage(imageFile);
@@ -75,8 +73,16 @@ public class ShopServiceImpl implements ShopService {
             throw new RuntimeException("Lỗi khi upload ảnh: " + e.getMessage());
         }
 
+
+        return this.saveShopToDatabase(shopRequest, avatarUrl, backgroundUrl);
+    }
+
+    @Transactional
+    public ShopResponse saveShopToDatabase(ShopRequest shopRequest, String avatarUrl, String backgroundUrl) {
+
         validateCoordinates(shopRequest.getLatitude(), shopRequest.getLongitude());
         this.validateLocation(shopRequest.getProvinceCode(), shopRequest.getWardCode());
+
 
         Shop shopEntity = new Shop();
         shopEntity.setName(shopRequest.getName());
@@ -88,14 +94,17 @@ public class ShopServiceImpl implements ShopService {
         shopEntity.setProvinceCode(provinceRepository.getReferenceById(shopRequest.getProvinceCode()));
         shopEntity.setWardCode(wardRepository.getReferenceById(shopRequest.getWardCode()));
 
+
         shopRepository.save(shopEntity);
+
+        Double avgRate = rateRepository.calculateAverageRatingForShop(shopEntity.getId());
 
         return ShopResponse.builder()
                 .id(shopEntity.getId())
                 .name(shopEntity.getName())
                 .address(shopEntity.getAddress())
                 .avatar(shopEntity.getAvatar())
-                .rateAvg(rateRepository.calculateAverageRatingForShop(shopEntity.getId()))
+                .rateAvg(avgRate != null ? avgRate : 0.0)
                 .background(shopEntity.getBackground())
                 .build();
     }
